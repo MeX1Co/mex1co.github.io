@@ -1,8 +1,8 @@
 {
-  "name": "3 Cushion Lssons",
+  "name": "3 Cushion Lessons",
   "short_name": "3CL",
   "icons": [{
-        "src": "3cl1/3cicon.png",
+        "src": "/3cl1/3cicon.png",
         "sizes": "144x144",
         "type": "image/png"
           }],
