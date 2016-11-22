@@ -1,24 +1,35 @@
 {
   "name": "3 Cushion Practice Guide",
-  "short_name": "3CPG",
+  "short_name": "3 Cushion Practice Guide",
+  "description": "3 Cushion Billiard Shots based on Jean-Cristophe Roux",
+  "lang": "en",
+  "start_url": "https://mex1co.github.io/3cl1/",
+  "scope": "https://mex1co.github.io/3cl1/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "theme_color": "#000000",
   "icons": [
     {
-        "src": "/3cl1/icon76.png",
-        "sizes": "76x76",
-        "type": "image/png"
-          }
+      "src": "/3cl1/icon76.png",
+      "sizes": "76x76",
+      "type": "image/png"
+    },
     {
-        "src": "/3cl1/icon120.png",
-        "sizes": "120x120",
-        "type": "image/png"
-          }
+      "src": "/3cl1/icon120.png",
+      "sizes": "120x120",
+      "type": "image/png"
+    },
     {
-        "src": "/3cl1/icon152.png",
-        "sizes": "152x152",
-        "type": "image/png"
-          }
+      "src": "/3cl1/icon152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    }
   ],
-  "start_url": "/3cl1/index.html",
-  "display": "standalone",
-  "orientation": "landscape"
+  "screenshots": [
+    {
+      "src": "/3cl1/start1150460.png",
+      "sizes": "1150x460",
+      "type": "image/png"
+    }
+  ]
 }
