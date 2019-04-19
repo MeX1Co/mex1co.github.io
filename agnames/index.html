@@ -43,13 +43,13 @@ var randName2m = name2m[Math.floor(Math.random() * name2m.length)];
 var randName2f = name2f[Math.floor(Math.random() * name2f.length)];
 var randCity1 = city[Math.floor(Math.random() * city.length)];
 var randCity2 = city[Math.floor(Math.random() * city.length)];
-var randM = "Male Name: " + randName1 + randName2m + " of " + randCity1
-var randF = "Female Name: " + randName2 + randName2f + " of " + randCity2
+var randM = randName1 + randName2m + " of " + randCity1
+var randF = randName2 + randName2f + " of " + randCity2
 
 
-  document.getElementById("demo").innerHTML = randM  + "<br />" +  randF;
+document.getElementById("demo").innerHTML = "Male Name: " + "<br />" + randM  + "<br />" + "<br />" +  "Female Name: " + "<br />" +  randF;
 }
-</script>
+  </script>
 
 </body>
 </html>
