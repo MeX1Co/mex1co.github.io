@@ -36,9 +36,16 @@ canvas {
 
 .logo-image {
     position: absolute;
-    top: 5;
-    right: 5;
+    top: 0;
+    right: 0;
     width: 350px; /* Default width */
     height: auto; /* Maintain aspect ratio */
     transform-origin: top right;
+}
+
+audio {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
 }
