@@ -78,18 +78,18 @@ function setupVisualizer() {
         analyser.getByteFrequencyData(dataArray);
 
         const centerX = canvas.width / 2;
-        const centerY = canvas.height * 0.4;
-        const maxRadius = 215 * (canvas.height / 1080);
+        const centerY = canvas.height * 0.40; // Adjusted center position
+        const maxRadius = 215 * (canvas.height / 1080); // Adjusted max radius
         const barWidth = maxRadius / bufferLength;
         const fadeDuration = 3; // Fade out duration in seconds
         const fadeStartTime = 193; // Start fading after 193 seconds
         const currentTime = audio.currentTime;
 
-        let opacity = 0.10; // Default opacity
+        let opacity = 0.25; // Initial opacity 10%
         if (currentTime > fadeStartTime) {
             // Calculate fade out opacity
             const fadeProgress = Math.min((currentTime - fadeStartTime) / fadeDuration, 1);
-            opacity = 0.10 * (1 - fadeProgress);
+            opacity = 0.25 * (1 - fadeProgress);
         }
 
         for (let i = 0; i < bufferLength; i++) {
@@ -97,9 +97,21 @@ function setupVisualizer() {
             const percent = value / 255;
             const radius = percent * maxRadius;
 
+            // Determine color based on frequency range
+            let color;
+            if (i < bufferLength * 0.25) {
+                color = `rgba(255, 255, 0, ${opacity})`; // Yellow
+            } else if (i < bufferLength * 0.5) {
+                color = `rgba(57, 255, 20, ${opacity})`; // Neon Green
+            } else if (i < bufferLength * 0.75) {
+                color = `rgba(255, 0, 255, ${opacity})`; // Magenta
+            } else {
+                color = `rgba(0, 255, 255, ${opacity})`; // Cyan
+            }
+
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.strokeStyle = color;
             ctx.lineWidth = barWidth;
             ctx.stroke();
         }
