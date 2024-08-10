@@ -1,7 +1,7 @@
 function adjustCanvasSize() {
-    const backgroundImage = document.getElementById('background-image');
     const canvas = document.getElementById('canvas');
     const logoImage = document.getElementById('logo-image');
+    const gifImage = document.getElementById('animated-gif');
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const imageAspectRatio = 1920 / 1080;
@@ -10,14 +10,14 @@ function adjustCanvasSize() {
     let scale = 1;
 
     if (viewportAspectRatio > imageAspectRatio) {
-        // Black bars on the sides
+        // Width is greater relative to height, so the image will have black bars on the sides
         const imageHeight = viewportHeight;
         const imageWidth = imageHeight * imageAspectRatio;
         canvas.width = imageWidth;
         canvas.height = imageHeight;
         scale = imageHeight / 1080;
     } else {
-        // Image is clipped
+        // Height is greater relative to width, so the image will be clipped on top and bottom
         canvas.width = viewportWidth;
         canvas.height = viewportHeight;
         scale = viewportHeight / 1080;
@@ -26,12 +26,12 @@ function adjustCanvasSize() {
     canvas.style.left = (window.innerWidth - canvas.width) / 2 + 'px';
     canvas.style.top = (window.innerHeight - canvas.height) / 2 + 'px';
 
-    // Scale and position the logo image within the canvas
     logoImage.style.width = 350 * scale + 'px';
     logoImage.style.top = canvas.style.top;
     logoImage.style.right = canvas.style.left;
 
-    // Adjust the audio player position
+    gifImage.style.width = 300 * scale + 'px';
+
     const audioPlayer = document.getElementById('audio');
     audioPlayer.style.bottom = '20px';
     audioPlayer.style.left = '50%';
@@ -41,6 +41,7 @@ function adjustCanvasSize() {
 function setupVisualizer() {
     const audio = document.getElementById('audio');
     const canvas = document.getElementById('canvas');
+    const gifImage = document.getElementById('animated-gif');
     const ctx = canvas.getContext('2d');
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -81,15 +82,14 @@ function setupVisualizer() {
         const centerY = canvas.height * 0.40; // Adjusted center position
         const maxRadius = 215 * (canvas.height / 1080); // Adjusted max radius
         const barWidth = maxRadius / bufferLength;
-        const fadeDuration = 3; // Fade out duration in seconds
+        const fadeDuration = 4; // Fade out duration in seconds
         const fadeStartTime = 193; // Start fading after 193 seconds
         const currentTime = audio.currentTime;
 
-        let opacity = 0.25; // Initial opacity 10%
+        let opacity = 0.35; // Initial opacity 35%
         if (currentTime > fadeStartTime) {
-            // Calculate fade out opacity
             const fadeProgress = Math.min((currentTime - fadeStartTime) / fadeDuration, 1);
-            opacity = 0.25 * (1 - fadeProgress);
+            opacity = 0.35 * (1 - fadeProgress);
         }
 
         for (let i = 0; i < bufferLength; i++) {
@@ -97,7 +97,6 @@ function setupVisualizer() {
             const percent = value / 255;
             const radius = percent * maxRadius;
 
-            // Determine color based on frequency range
             let color;
             if (i < bufferLength * 0.25) {
                 color = `rgba(255, 255, 0, ${opacity})`; // Yellow
@@ -117,12 +116,50 @@ function setupVisualizer() {
         }
     }
 
+    function animateGIF() {
+        const currentTime = audio.currentTime;
+        const gifStartTime = 76;
+        const gifEndTime = audio.duration;
+        const gifFadeStartTime = gifEndTime - 5; // Fade out over the last 5 seconds
+        const gifWidthStart = 300 * (canvas.height / 1080);
+        const gifWidthEnd = gifWidthStart / 2;
+
+        if (currentTime >= gifStartTime && currentTime <= gifEndTime) {
+            gifImage.style.display = 'block';
+            const elapsed = currentTime - gifStartTime;
+            const progress = Math.min(elapsed / (gifEndTime - gifStartTime), 1);
+
+            const startX = canvas.width / 2 - 400 * (canvas.height / 1080);
+            const endX = canvas.width / 2;
+            const startY = -gifWidthStart;
+            const endY = canvas.height * 0.4 - gifWidthEnd / 2;
+
+            const currentX = startX + (endX - startX) * progress;
+            const currentY = startY + (endY - startY) * progress;
+            const currentWidth = gifWidthStart - (gifWidthStart - gifWidthEnd) * progress;
+
+            gifImage.style.width = currentWidth + 'px';
+            gifImage.style.left = currentX + 'px';
+            gifImage.style.top = currentY + 'px';
+
+            if (currentTime > gifFadeStartTime) {
+                const fadeProgress = Math.min((currentTime - gifFadeStartTime) / 5, 1);
+                gifImage.style.opacity = 1 - fadeProgress;
+            } else {
+                gifImage.style.opacity = 1;
+            }
+        } else {
+            gifImage.style.display = 'none';
+        }
+    }
+
     function draw() {
         requestAnimationFrame(draw);
         drawBars();
         if (audio.currentTime >= 138) {
             drawCircles();
         }
+        animateGIF();
     }
 
     audio.addEventListener('play', () => {
