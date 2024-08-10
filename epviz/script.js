@@ -28,8 +28,8 @@ function adjustCanvasSize() {
 
     // Scale and position the logo image within the canvas
     logoImage.style.width = 350 * scale + 'px';
-    logoImage.style.top = (canvas.style.top+5);
-    logoImage.style.right = (canvas.style.left+5);
+    logoImage.style.top = canvas.style.top;
+    logoImage.style.right = canvas.style.left;
 
     // Adjust the audio player position
     const audioPlayer = document.getElementById('audio');
