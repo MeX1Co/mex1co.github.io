@@ -54,23 +54,62 @@ function setupVisualizer() {
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    function draw() {
-        requestAnimationFrame(draw);
+    function drawBars() {
         analyser.getByteFrequencyData(dataArray);
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const barWidth = (canvas.width / bufferLength);
+        
+        const barWidth = canvas.width / bufferLength;
         let barHeight;
         let x = 0;
 
+        ctx.clearRect(0, 0, canvas.width, canvas.height * 0.8);
+
         for (let i = 0; i < bufferLength; i++) {
             barHeight = dataArray[i];
+            const heightPercent = barHeight / 255;
 
-            ctx.fillStyle = '#6168d0';
-            ctx.fillRect(x, canvas.height - barHeight * 0.8 - (canvas.height * 0.2), barWidth, barHeight * 0.8);
+            ctx.fillStyle = `rgba(97, 104, 208, 0.5)`; // 50% opacity
+            ctx.fillRect(x, canvas.height * 0.8 - (barHeight * heightPercent * 0.8), barWidth, barHeight * heightPercent * 0.8);
 
-            x += barWidth + 1;
+            x += barWidth;
+        }
+    }
+
+    function drawCircles() {
+        analyser.getByteFrequencyData(dataArray);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height * 0.4;
+        const maxRadius = 215 * (canvas.height / 1080);
+        const barWidth = maxRadius / bufferLength;
+        const fadeDuration = 3; // Fade out duration in seconds
+        const fadeStartTime = 193; // Start fading after 193 seconds
+        const currentTime = audio.currentTime;
+
+        let opacity = 0.10; // Default opacity
+        if (currentTime > fadeStartTime) {
+            // Calculate fade out opacity
+            const fadeProgress = Math.min((currentTime - fadeStartTime) / fadeDuration, 1);
+            opacity = 0.10 * (1 - fadeProgress);
+        }
+
+        for (let i = 0; i < bufferLength; i++) {
+            const value = dataArray[i];
+            const percent = value / 255;
+            const radius = percent * maxRadius;
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.lineWidth = barWidth;
+            ctx.stroke();
+        }
+    }
+
+    function draw() {
+        requestAnimationFrame(draw);
+        drawBars();
+        if (audio.currentTime >= 138) {
+            drawCircles();
         }
     }
 
