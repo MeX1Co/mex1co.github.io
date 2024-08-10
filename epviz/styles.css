@@ -49,3 +49,52 @@ audio {
     left: 50%;
     transform: translateX(-50%);
 }
+
+.animated-gif {
+    position: absolute;
+    z-index: 1;
+    display: none;
+}
+
+/*
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: black;
+}
+
+#background-image {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    background: url('sky-planets2.jpg') no-repeat center center;
+    background-size: cover;
+}
+
+#canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#audio {
+    position: absolute;
+    z-index: 1;
+}
+
+#logo-image {
+    position: absolute;
+    z-index: 1;
+}
+
+#animated-gif {
+    position: absolute;
+    z-index: 1;
+    display: none;
+}
+
+*/
