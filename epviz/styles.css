@@ -26,7 +26,15 @@ body, html {
     left: 50%;
     height: 100%;
     transform: translateX(-50%);
+    animation: colorRotate 5s linear infinite;
 }
+
+@keyframes colorRotate {
+  100% {
+    -webkit-filter: hue-rotate(360deg);
+  }
+}
+
 
 canvas {
     position: absolute;
