@@ -1,1 +1,35 @@
+{
+  "songs": [
+    {
+      "name": "an",
+      "title": "AN",
+      "parts": [
+        "an00.ogg",
+        "an01.ogg",
+        "an02.ogg",
+        "an03.ogg",
+        "an04.ogg",
+        "an05.ogg",
+        "an06.ogg"
+      ],
+      "loopable": [1, 3, 5]
+    },
+    {
+      "name": "dwromp3",
+      "title": "DWRO MP3",
+      "parts": [
+        "dwro-mp00.mp3",
+        "dwro-mp01.mp3",
+        "dwro-mp02.mp3",
+        "dwro-mp03.mp3",
+        "dwro-mp04.mp3",
+        "dwro-mp05.mp3",
+        "dwro-mp06.mp3",              
+        "dwro-mp07.mp3",              
+        "dwro-mp08.mp3"
+      ],
+      "loopable": [1, 3, 5, 7]
+    }
+  ]
+}
 
