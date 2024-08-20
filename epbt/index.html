@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+<!-- Google tag (gtag.js)
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2YTTB2RTTF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-2YTTB2RTTF');
+</script>  -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Sequencer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="container">
+        <img id="logo" src="logotext450110.png" alt="Logo">
+        <div id="screen">
+            <div id="line1">PICK A SONG</div>
+            <div id="line2">Now Playing: </div>
+            <div id="line3"></div>
+            <div id="line4"></div>
+            <div id="progressBar"></div>
+        </div>
+        <div id="controls">
+            <button id="playButton" class="control-button"><i class="fas fa-play"></i></button>
+            <button id="nextButton" class="control-button"><i class="fas fa-step-forward"></i></button>
+            <button id="stopButton" class="control-button"><i class="fas fa-stop"></i></button>
+        </div>
+        <div id="songSelector"></div>
+        <div id="selectorControls">
+            <button id="upButton" class="selector-button"><i class="fas fa-chevron-up"></i></button>
+            <button id="downButton" class="selector-button"><i class="fas fa-chevron-down"></i></button>
+            <button id="selectButton" class="selector-button"><i class="fas fa-check"></i></button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
