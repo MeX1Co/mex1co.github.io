@@ -119,7 +119,7 @@ function stopAudio() {
 
 function updateScreen(index, isStopped = false) {
     document.getElementById('line2').textContent = isStopped
-        ? 'Now Playing: '
+        ? '... '
         : `Now Playing: ${songOptions[currentSong].files[index].split('/').pop()}`;
     document.getElementById('line3').textContent = isStopped ? '' : (songOptions[currentSong].loopFiles.includes(index) ? 'LOOPING' : 'NOT LOOPING');
     document.getElementById('line3').style.color = songOptions[currentSong].loopFiles.includes(index) ? 'var(--orange)' : 'var(--white)';
