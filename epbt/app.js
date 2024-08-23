@@ -119,7 +119,7 @@ function stopAudio() {
 
 function updateScreen(index, isStopped = false) {
     document.getElementById('line2').textContent = isStopped
-        ? '... '
+        ? 'Now Playing: '
         : `Now Playing: ${songOptions[currentSong].files[index].split('/').pop()}`;
     document.getElementById('line3').textContent = isStopped ? '' : (songOptions[currentSong].loopFiles.includes(index) ? 'LOOPING' : 'NOT LOOPING');
     document.getElementById('line3').style.color = songOptions[currentSong].loopFiles.includes(index) ? 'var(--orange)' : 'var(--white)';
@@ -244,6 +244,36 @@ document.getElementById('selectButton').addEventListener('click', () => {
         loadAudioFiles(currentSong);
     }
 });
+
+// Media Session API to handle headset buttons and other media controls
+if ('mediaSession' in navigator) {
+    // Handle the "nexttrack" action
+    navigator.mediaSession.setActionHandler('nexttrack', function() {
+        if (isPlaying && songOptions[currentSong].loopFiles.includes(currentIndex) && !isLoading) {
+            if (nextTriggered) {
+                // Cancel the next action
+                nextTriggered = false;
+                document.getElementById('nextButton').classList.remove('active');
+            } else {
+                // Trigger the next action
+                nextTriggered = true;
+                document.getElementById('nextButton').classList.add('active');
+            }
+        }
+    });
+
+    // Optionally, handle the "play" and "pause" actions as well
+    navigator.mediaSession.setActionHandler('play', function() {
+        if (!isPlaying && !isLoading) {
+            playAudio(currentIndex, audioContext.currentTime);
+            disableSongSelection();
+        }
+    });
+
+    navigator.mediaSession.setActionHandler('pause', function() {
+        stopAudio();
+    });
+}
 
 // Initial load
 fetchSongData();
