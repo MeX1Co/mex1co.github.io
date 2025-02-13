@@ -62,6 +62,19 @@ class Synth {
         });
 
         // Arpeggiator
+document.getElementById('arpeggiator-rate').addEventListener('input', (e) => {
+    this.arpeggiatorRate = parseFloat(e.target.value);
+    document.getElementById('arpeggiator-rate-value').textContent = e.target.value;
+});
+
+document.getElementById('arpeggiator-octaves').addEventListener('input', (e) => {
+    this.arpeggiatorOctaves = parseInt(e.target.value);
+    document.getElementById('arpeggiator-octaves-value').textContent = e.target.value;
+});
+
+document.getElementById('arpeggiator-mode').addEventListener('change', (e) => {
+    this.arpeggiatorMode = e.target.value;
+});
         document.getElementById('arpeggiator').addEventListener('change', (e) => {
             this.arpeggiatorActive = e.target.checked;
             if (this.arpeggiatorActive) {
