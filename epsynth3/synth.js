@@ -64,7 +64,16 @@ class Synth {
             this.updatePolyphony(value);
         });
 
-        // Arpeggiator controls
+        // Arpeggiator
+        document.getElementById('arpeggiator').addEventListener('change', (e) => {
+            this.arpeggiatorActive = e.target.checked;
+            if (this.arpeggiatorActive) {
+                this.startArpeggiator();
+            } else {
+                this.stopArpeggiator();
+            }
+        });
+
         document.getElementById('arpeggiator-rate').addEventListener('input', (e) => {
             this.arpeggiatorRate = parseFloat(e.target.value);
             document.getElementById('arpeggiator-rate-value').textContent = e.target.value;
@@ -120,7 +129,6 @@ class Synth {
             });
         }
     }
-
 
     midiToFrequency(note) {
         return 440 * Math.pow(2, (note - 69) / 12);
@@ -235,7 +243,7 @@ class Synth {
             key.classList.remove('active'));
     }
 
-    startArpeggiator() {
+   startArpeggiator() {
         this.arpeggioInterval = setInterval(() => {
             if (this.arpeggioNotes.length > 0) {
                 const notes = this.getArpeggioNotes();
