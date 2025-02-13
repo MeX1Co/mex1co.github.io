@@ -1,4 +1,24 @@
 // synth.js
+
+// Add this at the top of synth.js
+let audioContextStarted = false;
+
+function startAudioContext() {
+    if (!audioContextStarted) {
+        synth.audioContext.resume().then(() => {
+            audioContextStarted = true;
+            console.log('AudioContext started successfully!');
+        });
+    }
+}
+
+// Add event listeners for user gestures
+document.addEventListener('click', startAudioContext);
+document.addEventListener('touchstart', startAudioContext);
+
+// Initialize synth after the AudioContext is started
+const synth = new Synth();
+
 class Synth {
     constructor() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
