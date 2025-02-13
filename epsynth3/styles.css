@@ -138,7 +138,7 @@ input[type="range"] {
     background: #4CAF50;
 }
 
-#start-button {
+#startButton {
     background: #4CAF50;
     color: white;
     border: none;
@@ -147,10 +147,10 @@ input[type="range"] {
     transition: background 0.3s;
 }
 
-#start-button:hover {
+#startButton:hover {
     background: #45a049;
 }
 
-#start-button:active {
+#startButton:active {
     background: #3d8b40;
 }
