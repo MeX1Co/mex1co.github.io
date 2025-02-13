@@ -1,9 +1,7 @@
 class Synth {
     constructor() {
-        //this.audioContext = null;
-        //this.voices = [];
-        //this.activeNotes = new Map();
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Defer AudioContext creation until user interaction.
+        this.audioContext = null;
         this.voices = [];
         this.activeNotes = new Map();
         this.lastFrequency = 440;
@@ -14,10 +12,7 @@ class Synth {
         this.arpeggiatorOctaves = 1;
         this.arpeggiatorMode = 'up';
 
-        this.initControls();
-        this.createKeyboard();
-        this.initEffects();
-        this.updatePolyphony(5);
+        // Setup the start button so that the AudioContext is created/resumed on a user gesture.
         this.initStartButton();
     }
 
@@ -25,29 +20,31 @@ class Synth {
         const startButton = document.getElementById('startButton');
         const startContainer = document.getElementById('start-container');
         
-        const initSynth = () => {
-            // Create audio context after user gesture
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const initSynth = async () => {
+            // Create the AudioContext only after a user gesture.
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (this.audioContext.state !== 'running') {
+                await this.audioContext.resume();
+            }
             
-            // Initialize synth components
+            // Now initialize the controls, keyboard, effects, and polyphony.
             this.initControls();
             this.createKeyboard();
             this.initEffects();
-            this.updatePolyphony(5);
-            
-            // Remove start button
+            this.updatePolyphony(parseInt(document.getElementById('polyphony').value));
+
+            // Remove the start button container.
             startContainer.remove();
             
-            // Enable controls
+            // Enable controls that were disabled.
             document.querySelectorAll('input, select, button').forEach(el => {
                 el.disabled = false;
             });
         };
 
-        // Desktop click handler
         startButton.addEventListener('click', initSynth);
-        
-        // Mobile touch handler
         startButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
             initSynth();
@@ -66,12 +63,12 @@ class Synth {
     }
 
     initControls() {
-        // Oscillator
+        // Oscillator type control
         document.getElementById('waveform').addEventListener('change', (e) => {
             this.voices.forEach(voice => voice.oscillator.type = e.target.value);
         });
 
-        // ADSR
+        // ADSR controls: update displayed values on input.
         const adsrControls = ['attack', 'decay', 'sustain', 'release'];
         adsrControls.forEach(param => {
             const element = document.getElementById(param);
@@ -80,7 +77,7 @@ class Synth {
             });
         });
 
-        // Filter
+        // Filter controls: cutoff and resonance.
         document.getElementById('cutoff').addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             document.getElementById('cutoff-value').textContent = value;
@@ -93,14 +90,14 @@ class Synth {
             this.voices.forEach(voice => voice.filter.Q.setValueAtTime(value, this.audioContext.currentTime));
         });
 
-        // Polyphony
+        // Polyphony control.
         document.getElementById('polyphony').addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             document.getElementById('polyphony-value').textContent = value;
             this.updatePolyphony(value);
         });
 
-        // Arpeggiator
+        // Arpeggiator controls.
         document.getElementById('arpeggiator').addEventListener('change', (e) => {
             this.arpeggiatorActive = e.target.checked;
             if (this.arpeggiatorActive) {
@@ -124,7 +121,7 @@ class Synth {
             this.arpeggiatorMode = e.target.value;
         });
 
-        // Delay
+        // Delay controls.
         document.getElementById('delay-time').addEventListener('input', (e) => {
             document.getElementById('delay-time-value').textContent = e.target.value;
             this.delay.delayTime.setValueAtTime(e.target.value, this.audioContext.currentTime);
@@ -141,7 +138,7 @@ class Synth {
         const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         let whiteKeyCount = 0;
 
-        // Create 2 octaves (C2 to C4)
+        // Create a 2-octave keyboard (e.g., C2 to C4)
         for (let octave = 2; octave <= 3; octave++) {
             notes.forEach((note, index) => {
                 const isBlack = note.includes('#');
@@ -279,7 +276,7 @@ class Synth {
             key.classList.remove('active'));
     }
 
-   startArpeggiator() {
+    startArpeggiator() {
         this.arpeggioInterval = setInterval(() => {
             if (this.arpeggioNotes.length > 0) {
                 const notes = this.getArpeggioNotes();
@@ -294,14 +291,14 @@ class Synth {
     getArpeggioNotes() {
         let notes = [...this.arpeggioNotes];
         
-        // Add octaves
+        // Add additional octaves if needed.
         for (let octave = 1; octave < this.arpeggiatorOctaves; octave++) {
             notes = notes.concat(
                 this.arpeggioNotes.map(f => f * Math.pow(2, octave))
             );
         }
 
-        // Apply mode
+        // Apply the selected mode.
         switch(this.arpeggiatorMode) {
             case 'down':
                 return notes.reverse();
@@ -309,11 +306,10 @@ class Synth {
                 return notes.concat([...notes].reverse().slice(1));
             case 'random':
                 return notes.sort(() => Math.random() - 0.5);
-            default: // up
+            default: // 'up'
                 return notes;
         }
     }
-
 
     stopArpeggiator() {
         clearInterval(this.arpeggioInterval);
@@ -322,19 +318,16 @@ class Synth {
     }
 }
 
-// Initialize synth
-const synth = new Synth();
-
-// Handle mobile touch events
-document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-document.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
-
+// On DOMContentLoaded, initialize the Synth instance.
+// This will set up the start button, and audio-related initialization will occur on user interaction.
 document.addEventListener('DOMContentLoaded', () => {
     const synth = new Synth();
-    
-    // Disable all controls until initialized
+    // Disable all controls until the start button is pressed.
     document.querySelectorAll('input, select, button').forEach(el => {
-        if(el.id !== 'start-button') el.disabled = true;
+        if(el.id !== 'startButton') el.disabled = true;
     });
 });
 
+// Prevent mobile touch events from scrolling the page.
+document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+document.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
