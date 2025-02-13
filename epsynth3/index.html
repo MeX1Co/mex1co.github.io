@@ -1,108 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Synth</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Synth</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="synth-container">
-        <div class="controls-section">
-            <div class="control-group">
-                <h3>Oscillator</h3>
-                <select id="waveform">
-                    <option value="sine">Sine</option>
-                    <option value="square">Square</option>
-                    <option value="sawtooth">Sawtooth</option>
-                    <option value="triangle">Triangle</option>
-                </select>
-            </div>
+  <div class="synth-container">
+    <div class="controls-section">
+      <!-- Oscillator -->
+      <div class="control-group">
+        <h3>Oscillator</h3>
+        <select id="waveform">
+          <option value="sine">Sine</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+        </select>
+      </div>
 
-            <div class="control-group">
-                <h3>ADSR</h3>
-                <div class="slider-container">
-                    <label>Attack <span id="attack-value">0.1</span>s</label>
-                    <input type="range" id="attack" min="0" max="2" step="0.1" value="0.1">
-                </div>
-                <div class="slider-container">
-                    <label>Decay <span id="decay-value">0.3</span>s</label>
-                    <input type="range" id="decay" min="0" max="2" step="0.1" value="0.3">
-                </div>
-                <div class="slider-container">
-                    <label>Sustain <span id="sustain-value">0.7</span></label>
-                    <input type="range" id="sustain" min="0" max="1" step="0.1" value="0.7">
-                </div>
-                <div class="slider-container">
-                    <label>Release <span id="release-value">0.2</span>s</label>
-                    <input type="range" id="release" min="0" max="2" step="0.1" value="0.2">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>Filter</h3>
-                <div class="slider-container">
-                    <label>Cutoff <span id="cutoff-value">20000</span>Hz</label>
-                    <input type="range" id="cutoff" min="20" max="20000" value="20000">
-                </div>
-                <div class="slider-container">
-                    <label>Resonance <span id="resonance-value">1</span></label>
-                    <input type="range" id="resonance" min="1" max="20" value="1">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>Effects</h3>
-                <div class="slider-container">
-                    <label>Portamento <span id="portamento-value">0</span>s</label>
-                    <input type="range" id="portamento" min="0" max="1" step="0.1" value="0">
-                </div>
-                <div class="slider-container">
-                    <label>Polyphony <span id="polyphony-value">5</span></label>
-                    <input type="range" id="polyphony" min="1" max="5" value="5">
-                </div>
-                <div class="switch-container">
-                    <label>Arpeggiator</label>
-                    <label class="switch">
-                        <input type="checkbox" id="arpeggiator">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="slider-container">
-                    <label>Rate <span id="arpeggiator-rate-value">0.2</span>s</label>
-                    <input type="range" id="arpeggiator-rate" min="0.05" max="1" step="0.05" value="0.2">
-                </div>
-                <div class="slider-container">
-                    <label>Octaves <span id="arpeggiator-octaves-value">1</span></label>
-                    <input type="range" id="arpeggiator-octaves" min="1" max="3" value="1">
-                </div>
-                <div class="slider-container">
-                    <label>Mode</label>
-                    <select id="arpeggiator-mode">
-                        <option value="up">Up</option>
-                        <option value="down">Down</option>
-                        <option value="updown">Up/Down</option>
-                        <option value="random">Random</option>
-                    </select>
-                </div>
-                <div class="slider-container">
-                    <label>Delay Time <span id="delay-time-value">0</span>s</label>
-                    <input type="range" id="delay-time" min="0" max="2" step="0.1" value="0">
-                </div>
-                <div class="slider-container">
-                    <label>Delay Feedback <span id="delay-feedback-value">0</span></label>
-                    <input type="range" id="delay-feedback" min="0" max="1" step="0.1" value="0">
-                </div>
-            </div>
+      <!-- ADSR -->
+      <div class="control-group">
+        <h3>ADSR</h3>
+        <div class="slider-container">
+          <label>Attack <span id="attack-value">0.1</span>s</label>
+          <input type="range" id="attack" min="0" max="2" step="0.1" value="0.1" />
         </div>
-    <div id="start-container" style="text-align: center; margin: 20px;">
-        <button id="startButton" style="padding: 15px 30px; font-size: 1.2em;">
-            Click to Start Synth
-        </button>
-    </div>
-        <div class="keyboard" id="keyboard"></div>
+        <div class="slider-container">
+          <label>Decay <span id="decay-value">0.3</span>s</label>
+          <input type="range" id="decay" min="0" max="2" step="0.1" value="0.3" />
+        </div>
+        <div class="slider-container">
+          <label>Sustain <span id="sustain-value">0.7</span></label>
+          <input type="range" id="sustain" min="0" max="1" step="0.1" value="0.7" />
+        </div>
+        <div class="slider-container">
+          <label>Release <span id="release-value">0.2</span>s</label>
+          <input type="range" id="release" min="0" max="2" step="0.1" value="0.2" />
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="control-group">
+        <h3>Filter</h3>
+        <div class="slider-container">
+          <label>Cutoff <span id="cutoff-value">20000</span>Hz</label>
+          <input type="range" id="cutoff" min="20" max="20000" value="20000" />
+        </div>
+        <div class="slider-container">
+          <label>Resonance <span id="resonance-value">1</span></label>
+          <input type="range" id="resonance" min="1" max="20" value="1" />
+        </div>
+      </div>
+
+      <!-- Effects -->
+      <div class="control-group">
+        <h3>Effects</h3>
+        <div class="slider-container">
+          <label>Portamento <span id="portamento-value">0</span>s</label>
+          <input type="range" id="portamento" min="0" max="1" step="0.1" value="0" />
+        </div>
+        <div class="slider-container">
+          <label>Polyphony <span id="polyphony-value">5</span></label>
+          <input type="range" id="polyphony" min="1" max="5" value="5" />
+        </div>
+        <div class="switch-container">
+          <label>Arpeggiator</label>
+          <label class="switch">
+            <input type="checkbox" id="arpeggiator" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="slider-container">
+          <label>Rate <span id="arpeggiator-rate-value">0.2</span>s</label>
+          <input type="range" id="arpeggiator-rate" min="0.05" max="1" step="0.05" value="0.2" />
+        </div>
+        <div class="slider-container">
+          <label>Octaves <span id="arpeggiator-octaves-value">1</span></label>
+          <input type="range" id="arpeggiator-octaves" min="1" max="3" value="1" />
+        </div>
+        <div class="slider-container">
+          <label>Mode</label>
+          <select id="arpeggiator-mode">
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+            <option value="updown">Up/Down</option>
+            <option value="random">Random</option>
+          </select>
+        </div>
+        <div class="slider-container">
+          <label>Delay Time <span id="delay-time-value">0</span>s</label>
+          <input type="range" id="delay-time" min="0" max="2" step="0.1" value="0" />
+        </div>
+        <div class="slider-container">
+          <label>Delay Feedback <span id="delay-feedback-value">0</span></label>
+          <input type="range" id="delay-feedback" min="0" max="1" step="0.1" value="0" />
+        </div>
+      </div>
+
+      <!-- New LFO Control Group -->
+      <div class="control-group">
+        <h3>LFO</h3>
+        <div class="slider-container">
+          <label>
+            <input type="checkbox" id="lfo-enabled" /> Enable LFO
+          </label>
+        </div>
+        <div class="slider-container">
+          <label>LFO Rate (<span id="lfo-rate-value">5</span> Hz)</label>
+          <input type="range" id="lfo-rate" min="0.1" max="10" step="0.1" value="5" />
+        </div>
+        <div class="slider-container">
+          <label>LFO Depth (<span id="lfo-depth-value">10</span>)</label>
+          <input type="range" id="lfo-depth" min="0" max="50" step="1" value="10" />
+        </div>
+        <div class="slider-container">
+          <label>LFO Waveform</label>
+          <select id="lfo-waveform">
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="triangle">Triangle</option>
+            <option value="sawtooth">Sawtooth</option>
+          </select>
+        </div>
+        <div class="slider-container">
+          <label>LFO Target</label>
+          <select id="lfo-target">
+            <option value="pitch">Pitch</option>
+            <option value="filter">Filter</option>
+          </select>
+        </div>
+      </div>
     </div>
 
+    <div id="start-container" style="text-align: center; margin: 20px;">
+      <button id="startButton" style="padding: 15px 30px; font-size: 1.2em;">
+        Click to Start Synth
+      </button>
+    </div>
+
+    <div class="keyboard" id="keyboard"></div>
     <script src="synth.js"></script>
 </body>
 </html>
