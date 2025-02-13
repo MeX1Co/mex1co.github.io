@@ -137,3 +137,20 @@ input[type="range"] {
 .key.active {
     background: #4CAF50;
 }
+
+#start-button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#start-button:hover {
+    background: #45a049;
+}
+
+#start-button:active {
+    background: #3d8b40;
+}
