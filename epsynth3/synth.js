@@ -22,7 +22,7 @@ class Synth {
     }
 
     initStartButton() {
-        const startButton = document.getElementById('start-button');
+        const startButton = document.getElementById('startButton');
         const startContainer = document.getElementById('start-container');
         
         const initSynth = () => {
