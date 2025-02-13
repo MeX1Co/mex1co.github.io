@@ -1,29 +1,11 @@
-// synth.js
-
-// Add this at the top of synth.js
-let audioContextStarted = false;
-
-function startAudioContext() {
-    if (!audioContextStarted) {
-        synth.audioContext.resume().then(() => {
-            audioContextStarted = true;
-            console.log('AudioContext started successfully!');
-        });
-    }
-}
-
-// Add event listeners for user gestures
-document.addEventListener('click', startAudioContext);
-document.addEventListener('touchstart', startAudioContext);
-
-// Initialize synth after the AudioContext is started
-const synth = new Synth();
-
 class Synth {
     constructor() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.audioContext = null;
         this.voices = [];
         this.activeNotes = new Map();
+        //this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        //this.voices = [];
+        //this.activeNotes = new Map();
         this.lastFrequency = 440;
         this.arpeggiatorActive = false;
         this.arpeggioNotes = [];
@@ -36,6 +18,40 @@ class Synth {
         this.createKeyboard();
         this.initEffects();
         this.updatePolyphony(5);
+        this.initStartButton();
+    }
+
+    initStartButton() {
+        const startButton = document.getElementById('start-button');
+        const startContainer = document.getElementById('start-container');
+        
+        const initSynth = () => {
+            // Create audio context after user gesture
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Initialize synth components
+            this.initControls();
+            this.createKeyboard();
+            this.initEffects();
+            this.updatePolyphony(5);
+            
+            // Remove start button
+            startContainer.remove();
+            
+            // Enable controls
+            document.querySelectorAll('input, select, button').forEach(el => {
+                el.disabled = false;
+            });
+        };
+
+        // Desktop click handler
+        startButton.addEventListener('click', initSynth);
+        
+        // Mobile touch handler
+        startButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            initSynth();
+        }, { passive: false });
     }
 
     initEffects() {
@@ -312,4 +328,13 @@ const synth = new Synth();
 // Handle mobile touch events
 document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
 document.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const synth = new Synth();
+    
+    // Disable all controls until initialized
+    document.querySelectorAll('input, select, button').forEach(el => {
+        if(el.id !== 'start-button') el.disabled = true;
+    });
+});
 
