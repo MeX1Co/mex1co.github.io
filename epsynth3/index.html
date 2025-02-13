@@ -40,18 +40,33 @@
                 </div>
             </div>
 
-            <div class="control-group">
-                <h3>Filter</h3>
-                <div class="slider-container">
-                    <label>Cutoff <span id="cutoff-value">20000</span>Hz</label>
-                    <input type="range" id="cutoff" min="20" max="20000" value="20000">
-                </div>
-                <div class="slider-container">
-                    <label>Resonance <span id="resonance-value">1</span></label>
-                    <input type="range" id="resonance" min="1" max="20" value="1">
-                </div>
-            </div>
-
+<div class="control-group">
+    <h3>Arpeggiator</h3>
+    <div class="switch-container">
+        <label>Enabled</label>
+        <label class="switch">
+            <input type="checkbox" id="arpeggiator">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="slider-container">
+        <label>Rate <span id="arpeggiator-rate-value">0.2</span>s</label>
+        <input type="range" id="arpeggiator-rate" min="0.05" max="1" step="0.05" value="0.2">
+    </div>
+    <div class="slider-container">
+        <label>Octaves <span id="arpeggiator-octaves-value">1</span></label>
+        <input type="range" id="arpeggiator-octaves" min="1" max="3" value="1">
+    </div>
+    <div class="slider-container">
+        <label>Mode</label>
+        <select id="arpeggiator-mode">
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+            <option value="updown">Up/Down</option>
+            <option value="random">Random</option>
+        </select>
+    </div>
+</div>
             <div class="control-group">
                 <h3>Effects</h3>
                 <div class="slider-container">
