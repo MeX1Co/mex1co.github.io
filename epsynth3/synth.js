@@ -1,11 +1,11 @@
 class Synth {
     constructor() {
-        this.audioContext = null;
-        this.voices = [];
-        this.activeNotes = new Map();
-        //this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        //this.audioContext = null;
         //this.voices = [];
         //this.activeNotes = new Map();
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.voices = [];
+        this.activeNotes = new Map();
         this.lastFrequency = 440;
         this.arpeggiatorActive = false;
         this.arpeggioNotes = [];
