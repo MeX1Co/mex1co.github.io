@@ -206,40 +206,37 @@ class Synth {
         return voice;
     }
 
-    noteOn(frequency) {
-        if (this.arpeggiatorActive) {
-            if (!this.arpeggioNotes.includes(frequency)) {
-                this.arpeggioNotes.push(frequency);
-            }
-            return;
+noteOn(frequency) {
+    if (this.arpeggiatorActive) {
+        // When arpeggiator is active, add frequency to chord if not already present.
+        if (!this.arpeggioNotes.includes(frequency)) {
+            this.arpeggioNotes.push(frequency);
         }
-
-        const voice = this.getAvailableVoice();
-        if (!voice) return;
-
-        const portamentoTime = parseFloat(document.getElementById('portamento').value);
-        const now = this.audioContext.currentTime;
-
-        voice.oscillator.frequency.cancelScheduledValues(now);
-        if (portamentoTime > 0) {
-            voice.oscillator.frequency.exponentialRampToValueAtTime(frequency, now + portamentoTime);
-        } else {
-            voice.oscillator.frequency.setValueAtTime(frequency, now);
-        }
-
-        const attack = parseFloat(document.getElementById('attack').value);
-        const decay = parseFloat(document.getElementById('decay').value);
-        const sustain = parseFloat(document.getElementById('sustain').value);
-
-        voice.gain.gain.cancelScheduledValues(now);
-        voice.gain.gain.setValueAtTime(0, now);
-        voice.gain.gain.linearRampToValueAtTime(1, now + attack);
-        voice.gain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
-
-        voice.active = true;
-        this.activeNotes.set(frequency, voice);
-        this.highlightKey(frequency, true);
+        // Do not play immediately.
+        return;
     }
+    // Normal voice triggering when arpeggiator is off.
+    const voice = this.getAvailableVoice();
+    if (!voice) return;
+    const portamentoTime = parseFloat(document.getElementById('portamento').value);
+    const now = this.audioContext.currentTime;
+    voice.oscillator.frequency.cancelScheduledValues(now);
+    if (portamentoTime > 0) {
+        voice.oscillator.frequency.exponentialRampToValueAtTime(frequency, now + portamentoTime);
+    } else {
+        voice.oscillator.frequency.setValueAtTime(frequency, now);
+    }
+    const attack = parseFloat(document.getElementById('attack').value);
+    const decay = parseFloat(document.getElementById('decay').value);
+    const sustain = parseFloat(document.getElementById('sustain').value);
+    voice.gain.gain.cancelScheduledValues(now);
+    voice.gain.gain.setValueAtTime(0, now);
+    voice.gain.gain.linearRampToValueAtTime(1, now + attack);
+    voice.gain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+    voice.active = true;
+    this.activeNotes.set(frequency, voice);
+    this.highlightKey(frequency, true);
+}
 
     noteOff(frequency) {
         if (this.arpeggiatorActive) {
@@ -373,90 +370,4 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
 document.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
 
-
-// Existing noteOn remains for manual (non-arpeggiator) playing:
-noteOn(frequency) {
-    if (this.arpeggiatorActive) {
-        // When arpeggiator is active, add frequency to chord if not already present.
-        if (!this.arpeggioNotes.includes(frequency)) {
-            this.arpeggioNotes.push(frequency);
-        }
-        // Do not play immediately.
-        return;
-    }
-    // Normal voice triggering when arpeggiator is off.
-    const voice = this.getAvailableVoice();
-    if (!voice) return;
-    const portamentoTime = parseFloat(document.getElementById('portamento').value);
-    const now = this.audioContext.currentTime;
-    voice.oscillator.frequency.cancelScheduledValues(now);
-    if (portamentoTime > 0) {
-        voice.oscillator.frequency.exponentialRampToValueAtTime(frequency, now + portamentoTime);
-    } else {
-        voice.oscillator.frequency.setValueAtTime(frequency, now);
-    }
-    const attack = parseFloat(document.getElementById('attack').value);
-    const decay = parseFloat(document.getElementById('decay').value);
-    const sustain = parseFloat(document.getElementById('sustain').value);
-    voice.gain.gain.cancelScheduledValues(now);
-    voice.gain.gain.setValueAtTime(0, now);
-    voice.gain.gain.linearRampToValueAtTime(1, now + attack);
-    voice.gain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
-    voice.active = true;
-    this.activeNotes.set(frequency, voice);
-    this.highlightKey(frequency, true);
-}
-
-// New functions for arpeggiated playback that bypass the arpeggiatorActive check.
-noteOnArpeggiated(frequency) {
-    const voice = this.getAvailableVoice();
-    if (!voice) return;
-    const portamentoTime = parseFloat(document.getElementById('portamento').value);
-    const now = this.audioContext.currentTime;
-    voice.oscillator.frequency.cancelScheduledValues(now);
-    if (portamentoTime > 0) {
-        voice.oscillator.frequency.exponentialRampToValueAtTime(frequency, now + portamentoTime);
-    } else {
-        voice.oscillator.frequency.setValueAtTime(frequency, now);
-    }
-    const attack = parseFloat(document.getElementById('attack').value);
-    const decay = parseFloat(document.getElementById('decay').value);
-    const sustain = parseFloat(document.getElementById('sustain').value);
-    voice.gain.gain.cancelScheduledValues(now);
-    voice.gain.gain.setValueAtTime(0, now);
-    voice.gain.gain.linearRampToValueAtTime(1, now + attack);
-    voice.gain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
-    voice.active = true;
-    this.activeNotes.set(frequency, voice);
-    this.highlightKey(frequency, true);
-}
-
-noteOffArpeggiated(frequency) {
-    const voice = this.activeNotes.get(frequency);
-    if (!voice) return;
-    const release = parseFloat(document.getElementById('release').value);
-    const now = this.audioContext.currentTime;
-    voice.gain.gain.cancelScheduledValues(now);
-    voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-    voice.gain.gain.exponentialRampToValueAtTime(0.001, now + release);
-    setTimeout(() => {
-        voice.active = false;
-    }, release * 1000);
-    this.activeNotes.delete(frequency);
-    this.highlightKey(frequency, false);
-}
-
-// Modify the arpeggiator loop to use the new functions:
-startArpeggiator() {
-    this.arpeggioInterval = setInterval(() => {
-        if (this.arpeggioNotes.length > 0) {
-            const notes = this.getArpeggioNotes();
-            const frequency = notes[this.arpeggioIndex % notes.length];
-            this.noteOnArpeggiated(frequency);
-            // Duration of the note can be adjusted as needed.
-            setTimeout(() => this.noteOffArpeggiated(frequency), 100);
-            this.arpeggioIndex++;
-        }
-    }, this.arpeggiatorRate * 1000);
-}
 
