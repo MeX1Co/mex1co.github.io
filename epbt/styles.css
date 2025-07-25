@@ -2,7 +2,7 @@
     --gray: rgb(39, 39, 39);
     --black: rgb(5, 5, 5);
     --white: rgb(235, 235, 235);
-    --orange: rgb(225, 135, 0);
+    --color: rgb(225, 135, 0);
 }
 
 body {
@@ -27,7 +27,7 @@ body {
     width: 460px; /* Fixed width container */
     height: 100vh;
     padding: 10px;
-    border: 3px solid var(--orange);
+    border: 3px solid var(--color);
     border-radius: 20px;
 }
 
@@ -60,7 +60,7 @@ body {
     bottom: 0;
     left: 0;
     height: 4px;
-    background-color: var(--orange);
+    background-color: var(--color);
     width: 0%;
 }
 
@@ -87,7 +87,7 @@ body {
 }
 
 .control-button.active {
-    background-color: var(--orange);
+    background-color: var(--color);
     color: var(--black);
 }
 
@@ -117,7 +117,7 @@ body {
 }
 
 .song-option.active {
-    background-color: var(--orange);
+    background-color: var(--color);
 }
 
 .song-option.disabled {
