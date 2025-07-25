@@ -122,7 +122,7 @@ function updateScreen(index, isStopped = false) {
         ? '...: '
         : `Now Playing: ${songOptions[currentSong].files[index].split('/').pop()}`;
     document.getElementById('line3').textContent = isStopped ? '' : (songOptions[currentSong].loopFiles.includes(index) ? 'LOOPING' : 'NOT LOOPING');
-    document.getElementById('line3').style.color = songOptions[currentSong].loopFiles.includes(index) ? 'var(--orange)' : 'var(--white)';
+    document.getElementById('line3').style.color = songOptions[currentSong].loopFiles.includes(index) ? 'var(--color)' : 'var(--white)';
 }
 
 function updateProgressBar(index) {
