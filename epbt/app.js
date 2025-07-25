@@ -1,5 +1,11 @@
+// Audio management
+let audioContext;
 let currentAudio = null;
 let nextAudio = null;
+let currentSource = null;
+let nextSource = null;
+let currentGain = null;
+let nextGain = null;
 let isPlaying = false;
 let isLoading = false;
 let currentSong = null;
@@ -7,8 +13,9 @@ let currentIndex = 0;
 let nextTriggered = false;
 let songOptions = {};
 let currentSelectionIndex = 0;
+let wakeLock = null;
 
-// DOM elements cache
+// DOM elements
 const elements = {
   line1: document.getElementById('line1'),
   line2: document.getElementById('line2'),
@@ -18,6 +25,32 @@ const elements = {
   progressBar: document.getElementById('progressBar'),
   songSelector: document.getElementById('songSelector')
 };
+
+// Initialize audio context
+function initAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+// Wake lock management
+async function enableWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock active');
+    } catch (err) {
+      console.error('Wake Lock failed:', err);
+    }
+  }
+}
+
+function disableWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
 
 // Fetch song data
 async function fetchSongData() {
@@ -42,7 +75,7 @@ async function fetchSongData() {
   }
 }
 
-// Load song metadata (no audio preloading)
+// Load song metadata
 async function loadSong(song) {
   if (isLoading) return;
   
@@ -56,7 +89,10 @@ async function loadSong(song) {
     currentSong = song;
     currentIndex = 0;
     
-    // Preload first track in background
+    // Initialize audio context
+    initAudioContext();
+    
+    // Preload first track
     preloadNextTrack(0);
     
     elements.line1.textContent = `READY: ${songOptions[song].title}`;
@@ -77,10 +113,9 @@ function preloadNextTrack(index) {
   
   // Create new audio element
   const audio = new Audio(songOptions[currentSong].files[index]);
-  audio.preload = "metadata";
+  audio.preload = "auto";
   audio.load();
   
-  // Store for future use
   if (index === currentIndex) {
     currentAudio = audio;
   } else if (index === currentIndex + 1) {
@@ -88,11 +123,25 @@ function preloadNextTrack(index) {
   }
 }
 
-// Play audio
+// Play audio with gapless transition
 function playAudio(index) {
+  initAudioContext();
+  
+  // Cleanup previous sources
+  if (currentSource) {
+    currentSource.disconnect();
+    if (currentGain) currentGain.disconnect();
+  }
+  
   if (!currentAudio || currentAudio.src !== songOptions[currentSong].files[index]) {
     currentAudio = new Audio(songOptions[currentSong].files[index]);
   }
+  
+  // Create Web Audio nodes
+  currentSource = audioContext.createMediaElementSource(currentAudio);
+  currentGain = audioContext.createGain();
+  currentSource.connect(currentGain);
+  currentGain.connect(audioContext.destination);
   
   // Set playback properties
   const isLoopable = songOptions[currentSong].loopFiles.includes(index);
@@ -109,6 +158,7 @@ function playAudio(index) {
       isPlaying = true;
       updateScreen(index);
       elements.playButton.classList.add('active');
+      enableWakeLock();
       
       // Preload next track during playback
       if (index < songOptions[currentSong].files.length - 1 && !nextAudio) {
@@ -120,6 +170,47 @@ function playAudio(index) {
       elements.line1.textContent = "PLAY ERROR";
       stopAudio();
     });
+}
+
+// Schedule next track for gapless transition
+function scheduleNextTrack() {
+  if (!nextAudio || !audioContext) return;
+  
+  // Create nodes for next track
+  nextSource = audioContext.createMediaElementSource(nextAudio);
+  nextGain = audioContext.createGain();
+  nextSource.connect(nextGain);
+  nextGain.connect(audioContext.destination);
+  nextGain.gain.value = 0; // Start silent
+  
+  // Calculate transition time
+  const now = audioContext.currentTime;
+  const startTime = now + 0.1; // Start slightly in future
+  
+  // Set up crossfade
+  currentGain.gain.setValueAtTime(1, now);
+  currentGain.gain.linearRampToValueAtTime(0, startTime);
+  
+  nextGain.gain.setValueAtTime(0, now);
+  nextGain.gain.linearRampToValueAtTime(1, startTime);
+  
+  // Play next track
+  nextAudio.play()
+    .then(() => {
+      // Update state
+      currentIndex++;
+      currentAudio = nextAudio;
+      currentSource = nextSource;
+      currentGain = nextGain;
+      
+      // Reset next track
+      nextAudio = null;
+      nextSource = null;
+      nextGain = null;
+      
+      updateScreen(currentIndex);
+    })
+    .catch(console.error);
 }
 
 // Handle audio errors
@@ -141,12 +232,12 @@ function onAudioEnded(index) {
     
     currentIndex++;
     if (currentIndex < songOptions[currentSong].files.length) {
-      // Use preloaded audio if available
-      if (currentIndex === currentIndex + 1 && nextAudio) {
-        currentAudio = nextAudio;
-        nextAudio = null;
+      // Use gapless transition if possible
+      if (nextAudio && audioContext) {
+        scheduleNextTrack();
+      } else {
+        playAudio(currentIndex);
       }
-      playAudio(currentIndex);
     } else {
       stopAudio();
     }
@@ -167,6 +258,16 @@ function stopAudio() {
     nextAudio = null;
   }
   
+  if (currentSource) {
+    currentSource.disconnect();
+    currentSource = null;
+  }
+  
+  if (currentGain) {
+    currentGain.disconnect();
+    currentGain = null;
+  }
+  
   isPlaying = false;
   currentIndex = 0;
   nextTriggered = false;
@@ -177,6 +278,7 @@ function stopAudio() {
   
   updateScreen(currentIndex, true);
   enableSongSelection();
+  disableWakeLock();
 }
 
 // Update display
@@ -279,6 +381,11 @@ function handleNextButton() {
   if (isPlaying && songOptions[currentSong].loopFiles.includes(currentIndex)) {
     nextTriggered = !nextTriggered;
     elements.nextButton.classList.toggle('active', nextTriggered);
+    
+    // If currently looping, force transition
+    if (nextTriggered && currentAudio.loop) {
+      currentAudio.loop = false;
+    }
   }
 }
 
@@ -311,12 +418,25 @@ document.getElementById('selectButton').addEventListener('click', () => {
   }
 });
 
+// Auto-resume audio when tab becomes visible
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (currentAudio && isPlaying) {
+      currentAudio.pause();
+    }
+    disableWakeLock();
+  } else if (isPlaying && currentAudio) {
+    currentAudio.play().catch(console.error);
+    enableWakeLock();
+  }
+});
+
 // Initialize
 fetchSongData();
 
-// Auto-suspend audio when tab is hidden
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && currentAudio) {
-    currentAudio.pause();
+// Resume audio context on interaction
+document.body.addEventListener('click', () => {
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume();
   }
 });
