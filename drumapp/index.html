@@ -15,18 +15,24 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 12px;
     }
+    button { margin: 5px; padding: 10px 20px; font-size: 14px; }
 </style>
 </head>
 <body>
 
 <h1>Smart Drums Prototype</h1>
+<div id="status">Loading sounds...</div>
+
 <div id="grid"></div>
 <br>
 BPM: <input type="number" id="bpm" value="100" min="40" max="200">
-<button id="startBtn">Start</button>
-<button id="stopBtn">Stop</button>
+<br>
+<button id="startBtn" disabled>Start</button>
+<button id="stopBtn" disabled>Stop</button>
 
-<script src="tone.min.js"></script>
+<!-- Tone.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.2.7/Tone.min.js"></script>
+
 <script>
 const kit = [
     { name: 'kick', file: 'kick.mp3', midi: 36 },
@@ -43,7 +49,7 @@ const sounds = {};
 const grid = document.getElementById('grid');
 const gridSize = 300;
 
-// Load sounds
+// Create drum elements and Tone.Player objects
 kit.forEach(d => {
     sounds[d.name] = new Tone.Player(`/drumapp/rock/${d.file}`).toDestination();
     const el = document.createElement('div');
@@ -98,9 +104,21 @@ function getLoudness(y) {
 }
 
 let loop;
+
+async function preloadSounds() {
+    await Promise.all(Object.values(sounds).map(player => player.load()));
+    document.getElementById('status').textContent = "Ready!";
+    document.getElementById('startBtn').disabled = false;
+}
+
+preloadSounds();
+
 document.getElementById('startBtn').onclick = async () => {
-    await Tone.start();
+    await Tone.start(); // First tap starts AudioContext
+    console.log("Tone.js started");
+
     Tone.Transport.bpm.value = parseInt(document.getElementById('bpm').value);
+
     loop = new Tone.Loop(time => {
         document.querySelectorAll('.drum').forEach(el => {
             const name = el.dataset.name;
@@ -114,7 +132,9 @@ document.getElementById('startBtn').onclick = async () => {
             }
         });
     }, '16n').start(0);
+
     Tone.Transport.start();
+    document.getElementById('stopBtn').disabled = false;
 };
 
 document.getElementById('stopBtn').onclick = () => {
