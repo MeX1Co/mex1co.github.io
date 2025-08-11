@@ -51,7 +51,11 @@ const gridSize = 300;
 
 // Create drum elements and Tone.Player objects
 kit.forEach(d => {
-    sounds[d.name] = new Tone.Player(`rock/${d.file}`).toDestination();
+    const url = `rock/${d.file}`;
+    console.log('Loading:', url);
+    sounds[d.name] = new Tone.Player(url).toDestination();
+    // ...
+
     const el = document.createElement('div');
     el.className = 'drum';
     el.style.left = Math.random() * (gridSize-40) + 'px';
