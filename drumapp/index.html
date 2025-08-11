@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Smart Drums Prototype</title>
+<style>
+    body { background: #222; color: white; font-family: sans-serif; text-align: center; }
+    #grid {
+        width: 300px; height: 300px; background: #333;
+        position: relative; margin: 20px auto; border: 2px solid #555;
+    }
+    .drum {
+        width: 40px; height: 40px; background: #666;
+        border-radius: 50%; position: absolute; cursor: grab;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Smart Drums Prototype</h1>
+<div id="grid"></div>
+<br>
+BPM: <input type="number" id="bpm" value="100" min="40" max="200">
+<button id="startBtn">Start</button>
+<button id="stopBtn">Stop</button>
+
+<script src="tone.min.js"></script>
+<script>
+const kit = [
+    { name: 'kick', file: 'kick.mp3', midi: 36 },
+    { name: 'snare', file: 'snare.mp3', midi: 38 },
+    { name: 'hihat_closed', file: 'hihat_closed.mp3', midi: 42 },
+    { name: 'hihat_open', file: 'hihat_open.mp3', midi: 46 },
+    { name: 'tom_low', file: 'tom_low.mp3', midi: 45 },
+    { name: 'tom_high', file: 'tom_high.mp3', midi: 50 },
+    { name: 'crash', file: 'crash.mp3', midi: 49 },
+    { name: 'bell', file: 'bell.mp3', midi: 56 }
+];
+
+const sounds = {};
+const grid = document.getElementById('grid');
+const gridSize = 300;
+
+// Load sounds
+kit.forEach(d => {
+    sounds[d.name] = new Tone.Player(`/drumapp/rock/${d.file}`).toDestination();
+    const el = document.createElement('div');
+    el.className = 'drum';
+    el.style.left = Math.random() * (gridSize-40) + 'px';
+    el.style.top  = Math.random() * (gridSize-40) + 'px';
+    el.textContent = d.name.split('_')[0];
+    el.dataset.name = d.name;
+    grid.appendChild(el);
+    makeDraggable(el);
+});
+
+function makeDraggable(el) {
+    let offsetX, offsetY, dragging = false;
+    el.addEventListener('mousedown', startDrag);
+    el.addEventListener('touchstart', startDrag);
+    function startDrag(e) {
+        dragging = true;
+        const rect = el.getBoundingClientRect();
+        const evt = e.touches ? e.touches[0] : e;
+        offsetX = evt.clientX - rect.left;
+        offsetY = evt.clientY - rect.top;
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+    }
+    function drag(e) {
+        if (!dragging) return;
+        const evt = e.touches ? e.touches[0] : e;
+        let x = evt.clientX - grid.getBoundingClientRect().left - offsetX;
+        let y = evt.clientY - grid.getBoundingClientRect().top - offsetY;
+        x = Math.max(0, Math.min(gridSize - 40, x));
+        y = Math.max(0, Math.min(gridSize - 40, y));
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+    }
+    function endDrag() {
+        dragging = false;
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('touchmove', drag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchend', endDrag);
+    }
+}
+
+function getComplexity(x) {
+    return x / (gridSize - 40); // 0..1
+}
+function getLoudness(y) {
+    return 1 - (y / (gridSize - 40)); // 1 at top, 0 at bottom
+}
+
+let loop;
+document.getElementById('startBtn').onclick = async () => {
+    await Tone.start();
+    Tone.Transport.bpm.value = parseInt(document.getElementById('bpm').value);
+    loop = new Tone.Loop(time => {
+        document.querySelectorAll('.drum').forEach(el => {
+            const name = el.dataset.name;
+            const x = parseFloat(el.style.left);
+            const y = parseFloat(el.style.top);
+            const complexity = getComplexity(x);
+            const loudness = getLoudness(y);
+            if (Math.random() < complexity) {
+                sounds[name].volume.value = Tone.gainToDb(loudness);
+                sounds[name].start(time);
+            }
+        });
+    }, '16n').start(0);
+    Tone.Transport.start();
+};
+
+document.getElementById('stopBtn').onclick = () => {
+    Tone.Transport.stop();
+    if (loop) loop.stop();
+};
+</script>
+</body>
+</html>
