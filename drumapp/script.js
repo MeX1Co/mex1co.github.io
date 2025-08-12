@@ -2,15 +2,16 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // Main kit
 const kit = [
-    { name: 'kick', file: 'kick.mp3' },         // but1
-    { name: 'snare', file: 'snare.mp3' },       // but2
+    { name: 'kick', file: 'kick.mp3' },        // but1
+    { name: 'snare', file: 'snare.mp3' },      // but2
     { name: 'hihat_closed', file: 'hihat_closed.mp3' } // but3
 ];
 
-// Extra samples (open hihat)
+// Extra samples for special cases (open hihat)
 const extraSamples = {
     hihat_open: 'hihat_open.mp3'
 };
+
 
 // Patterns
 const drumPatterns = {
@@ -53,32 +54,39 @@ const drumPatterns = {
     ]
 };
 
-// Store loaded sounds
 const sounds = {};
-let hihatOpenSource = null;
-
 const grid = document.getElementById('grid');
 let gridSize;
 
-const muteStates = [false, false, false]; // but1, but2, but3
+// Mute states for but1, but2, but3
+const muteStates = [false, false, false];
 
-// Adjust grid size
+// Set up mute button events
+for (let i = 0; i < muteStates.length; i++) {
+    const btn = document.getElementById(`but${i + 1}`);
+    btn.addEventListener('click', () => {
+        muteStates[i] = !muteStates[i];
+        btn.textContent = muteStates[i] ? `Unmute ${i + 1}` : `Mute ${i + 1}`;
+    });
+}
+
+// Adjust grid size dynamically
 function updateGridSize() {
     gridSize = grid.getBoundingClientRect().width;
 }
 window.addEventListener('resize', updateGridSize);
 updateGridSize();
 
-// Load a sound
+// Load sound helper
 async function loadSound(url) {
     const res = await fetch(url);
     const arrayBuffer = await res.arrayBuffer();
     return audioCtx.decodeAudioData(arrayBuffer);
 }
 
-// Preload sounds
 async function preloadSounds() {
-    for (let d of kit) {
+    for (let i = 0; i < kit.length; i++) {
+        const d = kit[i];
         sounds[d.name] = await loadSound(`/drumapp/rock/${d.file}`);
         const el = document.createElement('div');
         el.className = 'drum';
@@ -86,17 +94,19 @@ async function preloadSounds() {
         el.style.top  = Math.random() * (gridSize - (gridSize * 0.12)) + 'px';
         el.textContent = d.name.split('_')[0];
         el.dataset.name = d.name;
+        el.dataset.index = i; // store kit index
         grid.appendChild(el);
         makeDraggable(el);
     }
-    for (let key in extraSamples) {
-        sounds[key] = await loadSound(`/drumapp/rock/${extraSamples[key]}`);
+    // Load extra samples
+    for (const [name, file] of Object.entries(extraSamples)) {
+        sounds[name] = await loadSound(`/drumapp/rock/${file}`);
     }
     document.getElementById('status').textContent = "Ready!";
     document.getElementById('startBtn').disabled = false;
 }
 
-// Make element draggable
+// Draggable behavior
 function makeDraggable(el) {
     let offsetX, offsetY, dragging = false;
     el.addEventListener('mousedown', startDrag);
@@ -141,10 +151,14 @@ function getLoudness(y) {
     return 1 - (y / (gridSize - (gridSize * 0.12)));
 }
 
+// Track open hihat node to stop it
+let openHihatNode = null;
+
 function playSound(name, loudness, time) {
-    if (name === 'hihat_closed' && hihatOpenSource) {
-        try { hihatOpenSource.stop(time); } catch {}
-        hihatOpenSource = null;
+    // Stop open hihat when closed plays
+    if (name === 'hihat_closed' && openHihatNode) {
+        openHihatNode.stop(time);
+        openHihatNode = null;
     }
     const source = audioCtx.createBufferSource();
     source.buffer = sounds[name];
@@ -156,21 +170,22 @@ function playSound(name, loudness, time) {
     source.start(time);
 
     if (name === 'hihat_open') {
-        hihatOpenSource = source;
+        openHihatNode = source;
     }
 }
 
-// Scheduling variables
+// Scheduling loop
 let currentStep = 0;
-let nextNoteTime = 0;
-let tempo = 120;
-const lookahead = 25.0; // ms
-const scheduleAheadTime = 0.1; // s
-let timerID;
+let schedulerInterval;
+function scheduler() {
+    const bpm = parseInt(document.getElementById('bpm').value);
+    const stepTime = (60 / bpm) / 4; // 16th notes
+    const now = audioCtx.currentTime;
 
-// Scheduler
-function scheduleNote(step, time) {
     document.querySelectorAll('.drum').forEach(el => {
+        const kitIndex = parseInt(el.dataset.index);
+        if (muteStates[kitIndex]) return; // skip if muted
+
         const name = el.dataset.name;
         const x = parseFloat(el.style.left);
         const y = parseFloat(el.style.top);
@@ -178,62 +193,35 @@ function scheduleNote(step, time) {
         const pattern = getPattern(name, x);
 
         if (pattern) {
-            if (name === 'hihat_closed' && pattern[step] === 2) {
-                playSound('hihat_open', loudness, time);
-            } else if (pattern[step] === 1) {
-                playSound(name, loudness, time);
-            }
-        }
-        if (!muteStates[kitIndex] && pattern && pattern[currentStep] > 0) {
-            if (name === 'hihat_closed' && pattern[currentStep] === 2) {
-                playSound('hihat_open', loudness, now + 0.05);
-            } else if (name === 'hihat_closed' && pattern[currentStep] === 1) {
-                playSound('hihat_closed', loudness, now + 0.05);
-            } else if (name !== 'hihat_closed') {
-                playSound(name, loudness, now + 0.05);
+            if (name === 'hihat_closed') {
+                if (pattern[currentStep] === 1) {
+                    playSound('hihat_closed', loudness, now + 0.05);
+                } else if (pattern[currentStep] === 2) {
+                    playSound('hihat_open', loudness, now + 0.05);
+                }
+            } else {
+                if (pattern[currentStep] === 1) {
+                    playSound(name, loudness, now + 0.05);
+                }
             }
         }
     });
-}
 
-function nextNote() {
-    const secondsPerBeat = 60.0 / tempo;
-    nextNoteTime += 0.25 * secondsPerBeat;
     currentStep = (currentStep + 1) % 16;
 }
 
-function scheduler() {
-    while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
-        scheduleNote(currentStep, nextNoteTime);
-        nextNote();
-    }
-    timerID = setTimeout(scheduler, lookahead);
-}
-
-// Button event listeners for mute
-document.getElementById('but1').addEventListener('click', () => toggleMute(0));
-document.getElementById('but2').addEventListener('click', () => toggleMute(1));
-document.getElementById('but3').addEventListener('click', () => toggleMute(2));
-
-function toggleMute(index) {
-    muteStates[index] = !muteStates[index];
-    document.getElementById(`but${index+1}`).classList.toggle('muted', muteStates[index]);
-}
-
-// Start / stop
+// Start/stop
 document.getElementById('startBtn').onclick = async () => {
     if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
     }
-    tempo = parseInt(document.getElementById('bpm').value) || 120;
-    currentStep = 0;
-    nextNoteTime = audioCtx.currentTime + 0.05;
-    scheduler();
+    const bpm = parseInt(document.getElementById('bpm').value);
+    schedulerInterval = setInterval(scheduler, (60 / bpm) / 4 * 1000);
     document.getElementById('stopBtn').disabled = false;
 };
 
 document.getElementById('stopBtn').onclick = () => {
-    clearTimeout(timerID);
+    clearInterval(schedulerInterval);
 };
 
 preloadSounds();
