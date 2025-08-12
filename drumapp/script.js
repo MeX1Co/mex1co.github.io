@@ -4,13 +4,14 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const kit = [
     { name: 'kick', file: 'kick.mp3' },
     { name: 'snare', file: 'snare.mp3' },
-    { name: 'hihat_closed', file: 'hihat_closed.mp3' } // single draggable lane for hi-hat
+    { name: 'hihat_closed', file: 'hihat_closed.mp3' },
+    { name: 'hihat_open', file: 'hihat_open.mp3' }
 ];
 
 // We'll also load the open hi-hat sample (used when pattern value === 2)
-const extraSamples = {
-    hihat_open: 'hihat_open.mp3'
-};
+// const extraSamples = {
+//    hihat_open: 'hihat_open.mp3'
+// };
 
 const drumPatterns = {
     kick: [
@@ -52,29 +53,30 @@ const drumPatterns = {
     ]
 };
 
+
+
 const sounds = {};
 const grid = document.getElementById('grid');
 let gridSize;
 
-// compute grid size used for positioning (same calculation as your working code)
+// Active open hihat tracking
+let activeHiHatOpen = null;
+
 function updateGridSize() {
     gridSize = grid.getBoundingClientRect().width;
 }
 window.addEventListener('resize', updateGridSize);
 updateGridSize();
 
-// loader
-async function loadSoundFile(path) {
-    const res = await fetch(path);
-    if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
-    const ab = await res.arrayBuffer();
-    return await audioCtx.decodeAudioData(ab);
+async function loadSound(url) {
+    const res = await fetch(url);
+    const arrayBuffer = await res.arrayBuffer();
+    return audioCtx.decodeAudioData(arrayBuffer);
 }
 
 async function preloadSounds() {
-    // load main kit (creates draggable elements)
     for (let d of kit) {
-        sounds[d.name] = await loadSoundFile(`/drumapp/rock/${d.file}`);
+        sounds[d.name] = await loadSound(`rock/${d.file}`);
         const el = document.createElement('div');
         el.className = 'drum';
         el.style.left = Math.random() * (gridSize - (gridSize * 0.12)) + 'px';
@@ -84,14 +86,10 @@ async function preloadSounds() {
         grid.appendChild(el);
         makeDraggable(el);
     }
-    // load the open hi-hat sample (not a separate draggable)
-    sounds['hihat_open'] = await loadSoundFile(`/drumapp/rock/${extraSamples.hihat_open}`);
-
     document.getElementById('status').textContent = "Ready!";
     document.getElementById('startBtn').disabled = false;
 }
 
-// draggable (same as your working code)
 function makeDraggable(el) {
     let offsetX, offsetY, dragging = false;
     el.addEventListener('mousedown', startDrag);
@@ -126,15 +124,13 @@ function makeDraggable(el) {
     }
 }
 
-// pattern selection (maps X position to one of the 10 patterns)
 function getPattern(name, x) {
-    const patterns = drumPatterns[name] || [];
-    if (patterns.length === 0) return null;
-    const available = gridSize - (gridSize * 0.12); // same used for clamping
-    let frac = x / available;
-    if (frac < 0) frac = 0; if (frac > 1) frac = 1;
-    let index = Math.floor(frac * patterns.length);
-    if (index >= patterns.length) index = patterns.length - 1;
+    let key = name;
+    if (name === 'hihat_closed' || name === 'hihat_open') {
+        key = 'hihat';
+    }
+    const patterns = drumPatterns[key] || [];
+    const index = Math.floor((x / (gridSize - (gridSize * 0.12))) * (patterns.length - 1));
     return patterns[index];
 }
 
@@ -143,64 +139,76 @@ function getLoudness(y) {
 }
 
 function playSound(name, loudness, time) {
-    const src = audioCtx.createBufferSource();
-    src.buffer = sounds[name];
-    const g = audioCtx.createGain();
-    g.gain.value = loudness;
-    src.connect(g).connect(audioCtx.destination);
-    src.start(time);
+    const source = audioCtx.createBufferSource();
+    source.buffer = sounds[name];
+
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = loudness;
+
+    source.connect(gainNode).connect(audioCtx.destination);
+
+    if (name === 'hihat_closed' && activeHiHatOpen) {
+        activeHiHatOpen.stop(time);
+        activeHiHatOpen = null;
+    }
+
+    if (name === 'hihat_open') {
+        if (activeHiHatOpen) {
+            activeHiHatOpen.stop(time);
+        }
+        activeHiHatOpen = source;
+        source.onended = () => {
+            if (activeHiHatOpen === source) {
+                activeHiHatOpen = null;
+            }
+        };
+    }
+
+    source.start(time);
 }
 
-// scheduling variables
 let currentStep = 0;
 let schedulerInterval;
-
-// scheduler called once every 16th note (via setInterval) — uses audioCtx.currentTime + small offset
 function scheduler() {
-    const bpm = parseInt(document.getElementById('bpm').value, 10) || 100;
+    const bpm = parseInt(document.getElementById('bpm').value);
+    const secondsPerBeat = 60 / bpm;
+    const stepTime = secondsPerBeat / 4;
     const now = audioCtx.currentTime;
 
     document.querySelectorAll('.drum').forEach(el => {
-        const name = el.dataset.name; // 'kick', 'snare', 'hihat_closed'
+        const name = el.dataset.name;
         const x = parseFloat(el.style.left);
         const y = parseFloat(el.style.top);
         const loudness = getLoudness(y);
         const pattern = getPattern(name, x);
 
-        if (!pattern) return;
-
-        const stepVal = pattern[currentStep]; // 0 / 1 / (2 for hi-hat)
-        if (name === 'hihat_closed') {
-            if (stepVal === 1) playSound('hihat_closed', loudness, now + 0.05);
-            else if (stepVal === 2) playSound('hihat_open', loudness, now + 0.05);
-        } else {
-            if (stepVal === 1) playSound(name, loudness, now + 0.05);
+        if (pattern) {
+            if (name === 'hihat_closed' || name === 'hihat_open') {
+                if (pattern[currentStep] === 1 && name === 'hihat_closed') {
+                    playSound('hihat_closed', loudness, now + 0.05);
+                } else if (pattern[currentStep] === 2 && name === 'hihat_open') {
+                    playSound('hihat_open', loudness, now + 0.05);
+                }
+            } else if (pattern[currentStep] === 1) {
+                playSound(name, loudness, now + 0.05);
+            }
         }
     });
 
     currentStep = (currentStep + 1) % 16;
 }
 
-// Start / Stop handlers (same style as the working code)
 document.getElementById('startBtn').onclick = async () => {
     if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
     }
-    const bpm = parseInt(document.getElementById('bpm').value, 10) || 100;
-    const stepMs = (60 / bpm) / 4 * 1000; // ms per 16th
-    // start interval scheduler
-    clearInterval(schedulerInterval);
-    schedulerInterval = setInterval(scheduler, stepMs);
+    schedulerInterval = setInterval(scheduler, (60 / parseInt(document.getElementById('bpm').value)) / 4 * 1000);
     document.getElementById('stopBtn').disabled = false;
 };
 
 document.getElementById('stopBtn').onclick = () => {
     clearInterval(schedulerInterval);
-    document.getElementById('stopBtn').disabled = true;
 };
 
-// preload and init
-preloadSounds().catch(err => {
-    console.error('Failed to preload sounds:', err);
-    document.getElementById('status').textContent = 'Error loading sounds (see console)';
-});
+preloadSounds();
+
