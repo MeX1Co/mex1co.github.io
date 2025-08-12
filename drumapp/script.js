@@ -1,9 +1,9 @@
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 const kit = [
-    { name: 'kick', file: 'kick.wav' },
-    { name: 'snare', file: 'snare.wav' },
-    { name: 'hihat_closed', file: 'hihat_closed.wav' }
+    { name: 'kick', file: 'kick.mp3' },
+    { name: 'snare', file: 'snare.mp3' },
+    { name: 'hihat_closed', file: 'hihat_closed.mp3' }
 ];
 
 const drumPatterns = {
