@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Smart Drums – Web Audio</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Drums Prototype</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>Smart Drums – Web Audio</h1>
-<div id="status">Click anywhere to load sounds...</div>
+<h1>Smart Drums Prototype</h1>
+<div id="status">Loading sounds...</div>
 
 <div id="grid"></div>
-
-BPM: <input type="number" id="bpm" value="100" min="40" max="200"><br>
+<br>
+<label for="bpm">BPM:</label>
+<input type="number" id="bpm" value="100" min="40" max="200">
+<br>
 <button id="startBtn" disabled>Start</button>
 <button id="stopBtn" disabled>Stop</button>
 
-<script src="app.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
