@@ -3,10 +3,10 @@
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 const kit = [
-    { name: 'kick', file: 'kick.mp3' },
-    { name: 'snare', file: 'snare.mp3' },
-    { name: 'hihat_closed', file: 'hihat_closed.mp3' },
-    { name: 'hihat_open', file: 'hihat_open.mp3' }
+    { name: 'kick', file: 'rock/kick.mp3' },
+    { name: 'snare', file: 'rock/snare.mp3' },
+    { name: 'hihat_closed', file: 'rock/hihat_closed.mp3' },
+    { name: 'hihat_open', file: 'rock/hihat_open.mp3' }
 ];
 
 const buffers = {};
