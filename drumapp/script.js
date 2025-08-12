@@ -1,18 +1,18 @@
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-// Drum kit
+// Main kit
 const kit = [
     { name: 'kick', file: 'kick.mp3' },
     { name: 'snare', file: 'snare.mp3' },
     { name: 'hihat_closed', file: 'hihat_closed.mp3' }
 ];
 
-// Extra sample for open hihat
+// Extra samples (open hihat)
 const extraSamples = {
-    'hihat_open': 'hihat_open.mp3'
+    hihat_open: 'hihat_open.mp3'
 };
 
-// Patterns (0 = rest, 1 = closed hihat, 2 = open hihat for hihat track)
+// Patterns
 const drumPatterns = {
     kick: [
         [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
@@ -32,31 +32,34 @@ const drumPatterns = {
         [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
         [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
         [1,1,1,0, 1,1,1,1, 1,1,1,0, 1,1,1,1],
-        [2,0,1,1, 1,1,0,1, 2,0,1,1, 1,1,0,1],
-        [1,2,1,2, 1,2,1,2, 1,2,1,2, 1,2,1,2]
+        [1,0,1,1, 1,1,0,1, 1,0,1,1, 1,1,0,1],
+        [1,1,1,1, 1,0,1,1, 1,1,1,0, 1,1,1,1]
     ]
 };
 
+// Store loaded sounds
 const sounds = {};
+let hihatOpenSource = null;
+
 const grid = document.getElementById('grid');
 let gridSize;
 
-// Adjusts based on element size in the DOM
+// Adjust grid size
 function updateGridSize() {
     gridSize = grid.getBoundingClientRect().width;
 }
 window.addEventListener('resize', updateGridSize);
 updateGridSize();
 
-// Load sounds
+// Load a sound
 async function loadSound(url) {
     const res = await fetch(url);
     const arrayBuffer = await res.arrayBuffer();
     return audioCtx.decodeAudioData(arrayBuffer);
 }
 
+// Preload sounds
 async function preloadSounds() {
-    // Load kit sounds
     for (let d of kit) {
         sounds[d.name] = await loadSound(`/drumapp/rock/${d.file}`);
         const el = document.createElement('div');
@@ -68,17 +71,14 @@ async function preloadSounds() {
         grid.appendChild(el);
         makeDraggable(el);
     }
-
-    // Load extra samples
-    for (let name in extraSamples) {
-        sounds[name] = await loadSound(`/drumapp/rock/${extraSamples[name]}`);
+    for (let key in extraSamples) {
+        sounds[key] = await loadSound(`/drumapp/rock/${extraSamples[key]}`);
     }
-
     document.getElementById('status').textContent = "Ready!";
     document.getElementById('startBtn').disabled = false;
 }
 
-// Draggable elements
+// Make element draggable
 function makeDraggable(el) {
     let offsetX, offsetY, dragging = false;
     el.addEventListener('mousedown', startDrag);
@@ -123,21 +123,11 @@ function getLoudness(y) {
     return 1 - (y / (gridSize - (gridSize * 0.12)));
 }
 
-// Scheduling variables
-let currentStep = 0;
-let nextNoteTime = 0.0;
-let lookahead = 25.0; // ms
-let scheduleAheadTime = 0.1; // seconds
-let timerID;
-let openHiHatSource = null;
-
-// Play sound with optional stop of open hihat
 function playSound(name, loudness, time) {
-    if (name === 'hihat_closed' && openHiHatSource) {
-        openHiHatSource.stop(time);
-        openHiHatSource = null;
+    if (name === 'hihat_closed' && hihatOpenSource) {
+        try { hihatOpenSource.stop(time); } catch {}
+        hihatOpenSource = null;
     }
-
     const source = audioCtx.createBufferSource();
     source.buffer = sounds[name];
 
@@ -148,12 +138,20 @@ function playSound(name, loudness, time) {
     source.start(time);
 
     if (name === 'hihat_open') {
-        openHiHatSource = source;
+        hihatOpenSource = source;
     }
 }
 
-// Schedule a single step
-function scheduleStep(step, time) {
+// Scheduling variables
+let currentStep = 0;
+let nextNoteTime = 0;
+let tempo = 120;
+const lookahead = 25.0; // ms
+const scheduleAheadTime = 0.1; // s
+let timerID;
+
+// Scheduler
+function scheduleNote(step, time) {
     document.querySelectorAll('.drum').forEach(el => {
         const name = el.dataset.name;
         const x = parseFloat(el.style.left);
@@ -162,45 +160,37 @@ function scheduleStep(step, time) {
         const pattern = getPattern(name, x);
 
         if (pattern) {
-            if (name === 'hihat_closed') {
-                if (pattern[step] === 1) {
-                    playSound('hihat_closed', loudness, time);
-                } else if (pattern[step] === 2) {
-                    playSound('hihat_open', loudness, time);
-                }
-            } else {
-                if (pattern[step] === 1) {
-                    playSound(name, loudness, time);
-                }
+            if (name === 'hihat_closed' && pattern[step] === 2) {
+                playSound('hihat_open', loudness, time);
+            } else if (pattern[step] === 1) {
+                playSound(name, loudness, time);
             }
         }
     });
 }
 
-// Advance step and set next time
-function nextStep() {
-    const bpm = parseInt(document.getElementById('bpm').value);
-    const secondsPerBeat = 60.0 / bpm;
-    nextNoteTime += 0.25 * secondsPerBeat; // 16th note
+function nextNote() {
+    const secondsPerBeat = 60.0 / tempo;
+    nextNoteTime += 0.25 * secondsPerBeat;
     currentStep = (currentStep + 1) % 16;
 }
 
-// Scheduler loop
 function scheduler() {
     while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
-        scheduleStep(currentStep, nextNoteTime);
-        nextStep();
+        scheduleNote(currentStep, nextNoteTime);
+        nextNote();
     }
     timerID = setTimeout(scheduler, lookahead);
 }
 
-// Start/stop
+// Start / stop
 document.getElementById('startBtn').onclick = async () => {
     if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
     }
+    tempo = parseInt(document.getElementById('bpm').value) || 120;
     currentStep = 0;
-    nextNoteTime = audioCtx.currentTime;
+    nextNoteTime = audioCtx.currentTime + 0.05;
     scheduler();
     document.getElementById('stopBtn').disabled = false;
 };
