@@ -1,30 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeX1Co's Anti Drummers</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Who Needs Drummers</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400&display=swap" rel="stylesheet">
+<style>
+    body {
+        background: #111;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px;
+        font-family: sans-serif;
+    }
+    #app {
+        width: 460px;
+        padding: 10px;
+        border: 3px solid orange;
+        border-radius: 20px;
+        box-sizing: border-box;
+        background: #222;
+        color: white;
+    }
+    .logo {
+        font-family: 'Orbitron', sans-serif;
+        text-align: right;
+        margin-bottom: 5px;
+    }
+    .logo h1 {
+        font-size: 1.5em;
+        margin: 0;
+    }
+    .logo h2 {
+        font-size: 0.9em;
+        margin: 0;
+        font-weight: normal;
+    }
+    .kit-button {
+        width: 100%;
+        padding: 5px 0;
+        text-align: center;
+        font-size: 1em;
+        border: none;
+        border-radius: 5px;
+        background: white;
+        color: black;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .kit-button.ready {
+        background: orange;
+        color: white;
+    }
+    #grid {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        margin-top: 5px;
+        background: url('bg-grid.png') center center / contain no-repeat;
+        position: relative;
+        overflow: hidden;
+    }
+    .drum {
+        position: absolute;
+        width: 12%;
+        aspect-ratio: 1 / 1;
+        background: orange;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7em;
+        cursor: grab;
+        color: white;
+        user-select: none;
+    }
+    .mute-buttons {
+        margin-top: 5px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    .mute-btn {
+        aspect-ratio: 1 / 1;
+        border: none;
+        border-radius: 10px;
+        background: grey;
+        color: white;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .mute-btn.unmuted {
+        background: orange;
+    }
+    .transport-buttons {
+        margin-top: 5px;
+        display: flex;
+        gap: 5px;
+    }
+    .transport-btn {
+        flex: 1;
+        height: 50px; /* same height as mute buttons assuming fixed size */
+        border: none;
+        border-radius: 10px;
+        background: grey;
+        color: white;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .transport-btn.active {
+        background: orange;
+    }
+    .bpm-slider {
+        margin-top: 5px;
+        width: 100%;
+    }
+</style>
 </head>
 <body>
+<div id="app">
+    <div class="logo">
+        <h1>Who Needs Drummers</h1>
+        <h2>by MeX1Co</h2>
+    </div>
 
-<h1>Who Needs Drummers</h1>
-<h3>by MeX1Co</h3>
-<div id="status">Loading sounds...</div>
+    <button id="kitBtn" class="kit-button">rock</button>
 
-<div id="grid"></div>
-<br>
-<label for="bpm">BPM:</label>
-<input type="number" id="bpm" value="100" min="40" max="200">
-<br>
-<button id="startBtn" disabled>Start</button>
-<button id="stopBtn" disabled>Stop</button>
+    <div id="grid"></div>
 
-<button id="but1">Mute 1</button>
-<button id="but2">Mute 2</button>
-<button id="but3">Mute 3</button>
+    <div class="mute-buttons">
+        <button id="but1" class="mute-btn">1</button>
+        <button id="but2" class="mute-btn">2</button>
+        <button id="but3" class="mute-btn">3</button>
+        <button id="but4" class="mute-btn">4</button>
+        <button id="but5" class="mute-btn">5</button>
+        <button id="but6" class="mute-btn">6</button>
+        <button id="but7" class="mute-btn">7</button>
+        <button id="but8" class="mute-btn">8</button>
+    </div>
 
-    
-<script src="script.js"></script>
+    <div class="transport-buttons">
+        <button id="startBtn" class="transport-btn">Start</button>
+        <button id="stopBtn" class="transport-btn">Stop</button>
+    </div>
+
+    <input id="bpm" class="bpm-slider" type="range" min="40" max="220" step="5" value="120">
+</div>
 </body>
 </html>
