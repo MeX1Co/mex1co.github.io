@@ -170,4 +170,144 @@ function makeDraggable(el) {
     }
     function drag(e) {
         if (!dragging) return;
-        const evt = e.touches ? e
+        const evt = e.touches ? e.touches[0] : e;
+        let x = evt.clientX - grid.getBoundingClientRect().left - offsetX;
+        let y = evt.clientY - grid.getBoundingClientRect().top - offsetY;
+        x = Math.max(0, Math.min(gridSize - (gridSize * 0.12), x));
+        y = Math.max(0, Math.min(gridSize - (gridSize * 0.12), y));
+        el.style.left = x + 'px';
+        el.style.top  = y + 'px';
+    }
+    function endDrag() {
+        dragging = false;
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('touchmove', drag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchend', endDrag);
+    }
+}
+
+// Pattern lookup (maps X position to pattern index)
+function getPattern(name, x) {
+    const patterns = drumPatterns[name] || [];
+    if (!patterns.length) return null;
+    const available = gridSize - (gridSize * 0.12);
+    let frac = x / available;
+    frac = Math.max(0, Math.min(1, frac));
+    let index = Math.floor(frac * patterns.length);
+    if (index >= patterns.length) index = patterns.length - 1;
+    return patterns[index];
+}
+
+function getLoudness(y) {
+    return 1 - (y / (gridSize - (gridSize * 0.12)));
+}
+
+// Track open hihat node to stop it when closed plays
+let openHihatNode = null;
+
+function playSound(name, loudness, time = 0) {
+    // Stop open hihat when closed plays
+    if (name === 'hihat_closed' && openHihatNode) {
+        try { openHihatNode.stop(time); } catch (e) {}
+        openHihatNode = null;
+    }
+
+    const src = audioCtx.createBufferSource();
+    src.buffer = sounds[name];
+
+    const g = audioCtx.createGain();
+    g.gain.value = loudness;
+
+    src.connect(g).connect(audioCtx.destination);
+    src.start(time);
+
+    if (name === 'hihat_open') {
+        // remember to be able to choke it later
+        openHihatNode = src;
+        src.onended = () => {
+            if (openHihatNode === src) openHihatNode = null;
+        };
+    }
+}
+
+// Scheduling loop (setInterval - same structure you used)
+let currentStep = 0;
+let schedulerInterval = null;
+
+function scheduler() {
+    // guard bpm (avoid NaN)
+    const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+    const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
+    const now = audioCtx.currentTime;
+
+    document.querySelectorAll('.drum').forEach(el => {
+        const kitIndex = parseInt(el.dataset.index, 10);
+
+        // if this kit slot is muted or not available -> skip
+        if (!muteStates[kitIndex]) return;
+
+        const name = el.dataset.name;
+        const x = parseFloat(el.style.left);
+        const y = parseFloat(el.style.top);
+        const loudness = getLoudness(y);
+        const pattern = getPattern(name, x);
+
+        if (!pattern) return;
+
+        const stepVal = pattern[currentStep];
+
+        if (name === 'hihat_closed') {
+            if (stepVal === 1) {
+                playSound('hihat_closed', loudness, now + 0.05);
+            } else if (stepVal === 2) {
+                playSound('hihat_open', loudness, now + 0.05);
+            }
+        } else {
+            if (stepVal === 1) {
+                playSound(name, loudness, now + 0.05);
+            }
+        }
+    });
+
+    currentStep = (currentStep + 1) % 16;
+}
+
+// Start / Stop handling
+document.getElementById('startBtn').addEventListener('click', async () => {
+    if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+    }
+    // prevent multiple intervals
+    if (schedulerInterval) clearInterval(schedulerInterval);
+
+    const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+    const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
+    const stepMs = (60 / bpm) / 4 * 1000;
+
+    currentStep = 0;
+    schedulerInterval = setInterval(scheduler, stepMs);
+    document.getElementById('stopBtn').disabled = false;
+    document.getElementById('startBtn').disabled = true;
+});
+
+document.getElementById('stopBtn').addEventListener('click', () => {
+    if (schedulerInterval) {
+        clearInterval(schedulerInterval);
+        schedulerInterval = null;
+    }
+    document.getElementById('stopBtn').disabled = true;
+    document.getElementById('startBtn').disabled = false;
+});
+
+// kit button - used as loader indicator (in future it can switch kits)
+const kitBtn = document.getElementById('kitBtn');
+kitBtn.dataset.kitname = 'rock';
+kitBtn.addEventListener('click', () => {
+    // allow re-load if desired
+    preloadSounds();
+});
+
+// initialize UI + load kit once on page load
+setupMuteButtons();
+preloadSounds();
