@@ -1,7 +1,21 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.2.7/Tone.min.js"></script>
-<script>
-const player = new Tone.Player("rock/kick.mp3").toDestination();
-player.load().then(() => console.log("Kick loaded!"));
-player.start();
-Tone.start();
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Drums – Web Audio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Smart Drums – Web Audio</h1>
+<div id="status">Click anywhere to load sounds...</div>
+
+<div id="grid"></div>
+
+BPM: <input type="number" id="bpm" value="100" min="40" max="200"><br>
+<button id="startBtn" disabled>Start</button>
+<button id="stopBtn" disabled>Stop</button>
+
+<script src="app.js"></script>
+</body>
+</html>
