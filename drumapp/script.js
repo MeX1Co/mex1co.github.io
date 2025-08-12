@@ -2,9 +2,9 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // Main kit
 const kit = [
-    { name: 'kick', file: 'kick.mp3' },
-    { name: 'snare', file: 'snare.mp3' },
-    { name: 'hihat_closed', file: 'hihat_closed.mp3' }
+    { name: 'kick', file: 'kick.mp3' },         // but1
+    { name: 'snare', file: 'snare.mp3' },       // but2
+    { name: 'hihat_closed', file: 'hihat_closed.mp3' } // but3
 ];
 
 // Extra samples (open hihat)
@@ -59,6 +59,8 @@ let hihatOpenSource = null;
 
 const grid = document.getElementById('grid');
 let gridSize;
+
+const muteStates = [false, false, false]; // but1, but2, but3
 
 // Adjust grid size
 function updateGridSize() {
@@ -182,6 +184,15 @@ function scheduleNote(step, time) {
                 playSound(name, loudness, time);
             }
         }
+        if (!muteStates[kitIndex] && pattern && pattern[currentStep] > 0) {
+            if (name === 'hihat_closed' && pattern[currentStep] === 2) {
+                playSound('hihat_open', loudness, now + 0.05);
+            } else if (name === 'hihat_closed' && pattern[currentStep] === 1) {
+                playSound('hihat_closed', loudness, now + 0.05);
+            } else if (name !== 'hihat_closed') {
+                playSound(name, loudness, now + 0.05);
+            }
+        }
     });
 }
 
@@ -197,6 +208,16 @@ function scheduler() {
         nextNote();
     }
     timerID = setTimeout(scheduler, lookahead);
+}
+
+// Button event listeners for mute
+document.getElementById('but1').addEventListener('click', () => toggleMute(0));
+document.getElementById('but2').addEventListener('click', () => toggleMute(1));
+document.getElementById('but3').addEventListener('click', () => toggleMute(2));
+
+function toggleMute(index) {
+    muteStates[index] = !muteStates[index];
+    document.getElementById(`but${index+1}`).classList.toggle('muted', muteStates[index]);
 }
 
 // Start / stop
