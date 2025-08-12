@@ -1,135 +1,173 @@
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let bpm = 120;
-let isPlaying = false;
-let currentStep = 0;
-let intervalId;
-let startTime;
-let loopCounter = 0;
+// script.js
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-const kit = {
-    kick: 'rock/kick.mp3',
-    snare: 'rock/snare.mp3',
-    hihatClosed: 'rock/hihat_closed.mp3'
-};
+// Main kit (draggables will be created for these)
+const kit = [
+    { name: 'kick', file: 'kick.mp3' },        // but1
+    { name: 'snare', file: 'snare.mp3' },      // but2
+    { name: 'hihat_closed', file: 'hihat_closed.mp3' } // but3 (controls closed+open)
+];
 
+// Extra samples for special cases (open hihat)
 const extraSamples = {
-    hihatOpen: 'rock/hihat_open.mp3'
+    hihat_open: 'hihat_open.mp3'
 };
 
+// Patterns (exactly as you supplied)
 const drumPatterns = {
-    kick:    [[1,0,0,0, 1,0,0,0], [1,0,0,1, 0,1,0,0], [1,0,1,0, 1,0,1,0]],
-    snare:   [[0,0,1,0, 0,0,1,0], [0,0,1,0, 0,1,0,1], [0,1,0,1, 0,1,0,1]],
-    hihat:   [[1,1,1,1, 1,1,1,1], [1,0,1,0, 1,0,1,0], [2,0,1,0, 2,0,1,0]]
+    kick: [
+        [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+        [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+        [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,1,0,0],
+        [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+        [1,0,0,0, 0,1,0,0, 1,0,0,1, 0,1,0,0],
+        [1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0],
+        [1,0,0,0, 1,0,1,0, 0,1,0,0, 1,0,0,1],
+        [1,1,0,1, 0,1,0,0, 1,0,1,1, 0,0,1,0],
+        [1,0,1,0, 1,0,1,0, 0,1,0,1, 0,1,0,1],
+        [1,0,1,1, 0,1,0,1, 1,0,1,0, 0,1,1,0]
+    ],
+    snare: [
+        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        [0,0,0,1, 0,0,1,0, 0,0,0,1, 0,0,1,0],
+        [0,0,1,0, 1,0,0,0, 0,1,0,0, 1,0,0,0],
+        [0,1,0,1, 0,1,0,0, 1,0,1,0, 0,0,1,0],
+        [0,0,1,0, 1,0,1,0, 0,1,0,1, 0,1,0,0],
+        [1,0,0,1, 0,1,0,1, 1,0,1,0, 0,1,1,0],
+        [0,1,0,0, 1,0,1,0, 0,1,0,1, 1,0,1,0],
+        [0,1,1,0, 1,0,1,1, 0,1,0,1, 1,1,0,1],
+        [1,1,0,1, 1,0,1,0, 1,1,0,1, 1,0,1,0],
+        [1,0,1,1, 0,1,0,1, 1,1,0,1, 0,1,1,0]
+    ],
+    // hi-hat lane uses 0/1/2 (0 nothing, 1 closed, 2 open)
+    hihat_closed: [
+        [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+        [1,0,1,0, 1,0,1,2, 1,0,1,0, 1,0,1,2],
+        [1,1,1,1, 0,0,0,0, 1,1,1,1, 0,0,0,0],
+        [1,1,2,1, 1,1,2,1, 1,1,2,1, 1,1,2,1],
+        [1,1,2,0, 1,0,1,1, 2,0,1,1, 0,1,2,0],
+        [2,0,1,1, 0,2,1,1, 0,1,2,0, 1,1,0,2],
+        [1,1,1,2, 2,1,1,1, 1,1,2,1, 2,1,1,0],
+        [2,1,2,1, 1,2,1,2, 2,1,2,1, 1,2,1,2],
+        [1,1,1,2, 1,1,2,1, 2,1,1,1, 1,2,1,1],
+        [2,2,1,2, 1,2,2,1, 2,1,2,2, 1,2,1,2]
+    ]
 };
 
-const muteState = {
-    but1: true, // kick
-    but2: true, // snare
-    but3: true, // closed hihat
-    but4: true, // open hihat
-    but5: false,
-    but6: false,
-    but7: false,
-    but8: false
-};
+const sounds = {};
+const grid = document.getElementById('grid');
+let gridSize;
 
-const buffers = {};
-const sourceTracker = {};
+// Mute states for but1..but8 (true = unmuted/active). first 3 default to unmuted
+const muteStates = [true, true, true, false, false, false, false, false];
 
-async function loadSample(url) {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    return await audioContext.decodeAudioData(arrayBuffer);
-}
-
-async function loadKit() {
-    document.getElementById('kitBtn').classList.remove('ready');
-    const loadPromises = [];
-
-    for (let key in kit) {
-        loadPromises.push(loadSample(kit[key]).then(buffer => buffers[key] = buffer));
-    }
-    for (let key in extraSamples) {
-        loadPromises.push(loadSample(extraSamples[key]).then(buffer => buffers[key] = buffer));
-    }
-
-    await Promise.all(loadPromises);
-    document.getElementById('kitBtn').classList.add('ready');
-}
-
-function playSound(buffer, label) {
-    if (label === 'hihatClosed' && sourceTracker['hihatOpen']) {
-        sourceTracker['hihatOpen'].stop();
-        delete sourceTracker['hihatOpen'];
-    }
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.start();
-    sourceTracker[label] = source;
-}
-
-function scheduler() {
-    const stepDuration = (60 / bpm) / 2; // 8th notes
-    const currentTime = audioContext.currentTime;
-
-    for (let drum in drumPatterns) {
-        let patternIndex = Math.min(loopCounter % drumPatterns[drum].length, drumPatterns[drum].length - 1);
-        const pattern = drumPatterns[drum][patternIndex];
-        const sound = drum === 'hihat' ? null : drum;
-        const label = drum === 'hihat' ? null : drum;
-
-        const hit = pattern[currentStep];
-
-        if (drum === 'hihat') {
-            if (hit === 1 && muteState['but3']) playSound(buffers.hihatClosed, 'hihatClosed');
-            if (hit === 2 && muteState['but4']) playSound(buffers.hihatOpen, 'hihatOpen');
+// Setup mute buttons (but1..but8). but1..but3 map to kit indices 0..2
+function setupMuteButtons() {
+    for (let i = 0; i < 8; i++) {
+        const btn = document.getElementById(`but${i + 1}`);
+        if (!btn) continue;
+        if (i < kit.length) {
+            // available instrument: enable button and set initial state
+            btn.disabled = false;
+            btn.classList.toggle('unmuted', muteStates[i]);
+            btn.addEventListener('click', () => {
+                muteStates[i] = !muteStates[i];
+                btn.classList.toggle('unmuted', muteStates[i]);
+            });
         } else {
-            const btnId = drum === 'kick' ? 'but1' : 'but2';
-            if (hit === 1 && muteState[btnId]) playSound(buffers[drum], drum);
+            // no instrument assigned yet -> mark inactive
+            btn.disabled = true;
+            btn.classList.remove('unmuted');
+            btn.style.opacity = '0.5';
         }
     }
+}
 
-    currentStep++;
-    if (currentStep >= 8) {
-        currentStep = 0;
-        loopCounter++;
+// Adjust grid size dynamically
+function updateGridSize() {
+    gridSize = grid.getBoundingClientRect().width;
+}
+window.addEventListener('resize', updateGridSize);
+updateGridSize();
+
+// Load sound helper
+async function loadSound(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
+    const arrayBuffer = await res.arrayBuffer();
+    return audioCtx.decodeAudioData(arrayBuffer);
+}
+
+// Preload sounds and create draggable elements
+async function preloadSounds() {
+    const kitBtn = document.getElementById('kitBtn');
+    const startBtn = document.getElementById('startBtn');
+
+    // prevent double-load
+    kitBtn.disabled = true;
+    kitBtn.classList.remove('ready');
+    kitBtn.textContent = 'loading...';
+    startBtn.disabled = true;
+
+    // remove any existing drums in grid (reloading)
+    document.querySelectorAll('#grid .drum').forEach(n => n.remove());
+
+    try {
+        // load kit (and create draggable elements)
+        for (let i = 0; i < kit.length; i++) {
+            const d = kit[i];
+            const url = `/drumapp/rock/${d.file}`;
+            sounds[d.name] = await loadSound(url);
+
+            // create draggable visual
+            const el = document.createElement('div');
+            el.className = 'drum';
+            // position relative to current gridSize
+            el.style.left = Math.random() * (gridSize - (gridSize * 0.12)) + 'px';
+            el.style.top  = Math.random() * (gridSize - (gridSize * 0.12)) + 'px';
+            el.textContent = d.name.split('_')[0];
+            el.dataset.name = d.name;
+            el.dataset.index = i; // index in kit array
+            grid.appendChild(el);
+            makeDraggable(el);
+        }
+
+        // load extra samples (open hihat)
+        for (const [name, file] of Object.entries(extraSamples)) {
+            const url = `/drumapp/rock/${file}`;
+            sounds[name] = await loadSound(url);
+        }
+
+        // indicate ready
+        kitBtn.classList.add('ready');
+        kitBtn.textContent = kitBtn.dataset.kitname || 'rock';
+        startBtn.disabled = false;
+        console.log('All samples loaded.');
+    } catch (err) {
+        console.error('Error loading samples:', err);
+        kitBtn.textContent = 'load failed';
+        kitBtn.disabled = false;
+        // keep start disabled on failure
     }
 }
 
-function startPlaying() {
-    if (isPlaying) return;
-    isPlaying = true;
-    document.getElementById('startBtn').classList.add('active');
-    document.getElementById('stopBtn').classList.remove('active');
-    currentStep = 0;
-    loopCounter = 0;
-    intervalId = setInterval(scheduler, (60 / bpm) * 500); // half note timing
-}
-
-function stopPlaying() {
-    if (!isPlaying) return;
-    isPlaying = false;
-    document.getElementById('startBtn').classList.remove('active');
-    document.getElementById('stopBtn').classList.add('active');
-    clearInterval(intervalId);
-}
-
-document.getElementById('startBtn').addEventListener('click', startPlaying);
-document.getElementById('stopBtn').addEventListener('click', stopPlaying);
-
-document.getElementById('bpm').addEventListener('input', e => {
-    bpm = parseInt(e.target.value);
-});
-
-document.querySelectorAll('.mute-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        muteState[btn.id] = !muteState[btn.id];
-        btn.classList.toggle('unmuted', muteState[btn.id]);
-    });
-});
-
-document.getElementById('kitBtn').addEventListener('click', loadKit);
-
-// Load initial kit
-loadKit();
+// Draggable behavior (same as your last working code)
+function makeDraggable(el) {
+    let offsetX, offsetY, dragging = false;
+    el.addEventListener('mousedown', startDrag);
+    el.addEventListener('touchstart', startDrag, {passive:false});
+    function startDrag(e) {
+        e.preventDefault && e.preventDefault();
+        dragging = true;
+        const rect = el.getBoundingClientRect();
+        const evt = e.touches ? e.touches[0] : e;
+        offsetX = evt.clientX - rect.left;
+        offsetY = evt.clientY - rect.top;
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, {passive:false});
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+    }
+    function drag(e) {
+        if (!dragging) return;
+        const evt = e.touches ? e
