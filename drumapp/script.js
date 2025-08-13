@@ -1,3 +1,29 @@
+// ====== SLIDER + BPM DISPLAY ======
+document.addEventListener("DOMContentLoaded", () => {
+    const bpmSlider = document.getElementById("bpmSlider");
+    const bpmValue = document.getElementById("bpmValue");
+    const bpmInput = document.getElementById("bpm"); // the hidden/input field you already use
+
+    // Sync initial display
+    bpmValue.textContent = `${bpmSlider.value} BPM`;
+    bpmInput.value = bpmSlider.value;
+
+    bpmSlider.addEventListener("input", () => {
+        bpmValue.textContent = `${bpmSlider.value} BPM`;
+        bpmInput.value = bpmSlider.value;
+    });
+
+    // Simulate loading state for kit button
+    const kitBtn = document.getElementById("kitBtn");
+    kitBtn.disabled = true;
+    kitBtn.style.background = "white";
+    setTimeout(() => {
+        kitBtn.style.background = "orange";
+        kitBtn.disabled = false;
+    }, 2000);
+});
+
+
 // script.js
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
