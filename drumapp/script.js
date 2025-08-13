@@ -342,6 +342,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     schedulerInterval = setInterval(scheduler, stepMs);
     document.getElementById('stopBtn').disabled = false;
     document.getElementById('startBtn').disabled = true;
+    startBtn.classList.add('active');
 });
 
 document.getElementById('stopBtn').addEventListener('click', () => {
@@ -351,6 +352,7 @@ document.getElementById('stopBtn').addEventListener('click', () => {
     }
     document.getElementById('stopBtn').disabled = true;
     document.getElementById('startBtn').disabled = false;
+    startBtn.classList.remove('active');
 });
 
 // kit button - used as loader indicator (in future it can switch kits)
