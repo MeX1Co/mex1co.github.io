@@ -219,8 +219,8 @@ let currentStep = 0;
 let schedulerInterval = null;
 
 function scheduler() {
-    // guard bpm (avoid NaN)
-    const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+    // guard  (avoid NaN)
+    const bpmRaw = parseInt(document.getElementById('bpmSlider').value, 10);
     const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
     const now = audioCtx.currentTime;
 
@@ -264,7 +264,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     // prevent multiple intervals
     if (schedulerInterval) clearInterval(schedulerInterval);
 
-    const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+    const bpmRaw = parseInt(document.getElementById('bpmSlider').value, 10);
     const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
     const stepMs = (60 / bpm) / 4 * 1000;
 
@@ -284,12 +284,12 @@ document.getElementById('stopBtn').addEventListener('click', () => {
 });
 
 // Kit button setup (merged from both versions)
-const kitBtn = document.getElementById('kitBtn');
+const kitBtn = document.getElementById('kitButton');
 kitBtn.dataset.kitname = 'rock';
 kitBtn.addEventListener('click', () => preloadSounds());
 
 // Slider BPM display
-const bpmSlider = document.getElementById("bpm");
+const bpmSlider = document.getElementById("bpmSlider");
 const bpmValue = document.getElementById("bpmValue");
 bpmValue.textContent = `${bpmSlider.value} BPM`;
 bpmSlider.addEventListener("input", () => {
