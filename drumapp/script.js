@@ -8,6 +8,41 @@ const kit = [
     { name: 'hihat', file: 'hihat_closed.mp3' } // but3 (controls closed+open)
 ];
 
+// Add this helper to create an icon element
+function createDrumIcon(drumName) {
+    const img = document.createElement('img');
+    img.src = `drumicons/${drumName}.png`;
+    img.alt = drumName;
+    img.style.width = '24px';
+    img.style.height = '24px';
+    img.style.objectFit = 'contain';
+    return img;
+}
+
+// Update your drum creation loop
+drumNames.forEach((drumName) => {
+    const drum = document.createElement('div');
+    drum.className = 'drum';
+    
+    // Add icon inside the drum
+    const icon = createDrumIcon(drumName);
+    drum.appendChild(icon);
+
+    // ... your existing code for adding drum label, sounds, events, etc.
+
+    // Create mute button with icon
+    const muteButton = document.createElement('button');
+    muteButton.className = 'mute';
+    muteButton.appendChild(createDrumIcon(drumName)); // same icon
+    muteButton.addEventListener('click', () => {
+        // Your existing mute logic here
+    });
+
+    // Append drum and mute button to UI
+    container.appendChild(drum);
+    container.appendChild(muteButton);
+});
+
 // Extra samples for special cases (open hihat)
 const extraSamples = {
     hihat_open: 'hihat_open.mp3'
