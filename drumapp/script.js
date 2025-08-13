@@ -14,7 +14,7 @@ const extraSamples = {
 };
 
 // helper for icon paths (place after your `kit` declaration)
-const ICON_BASE = '/drumicons';
+const ICON_BASE = '/drumapp/drumicons';
 const iconUrl = (name) => `${ICON_BASE}/${name}.png`;
 
 // Patterns (exactly as you supplied)
