@@ -308,6 +308,15 @@ kitBtn.addEventListener('click', () => {
     preloadSounds();
 });
 
+// Slider BPM display
+const bpmSlider = document.getElementById("bpm");
+const bpmValue = document.getElementById("bpmValue");
+bpmValue.textContent = `${bpmSlider.value} BPM`;
+bpmSlider.addEventListener("input", () => {
+    bpmValue.textContent = `${bpmSlider.value} BPM`;
+});
+
+
 // initialize UI + load kit once on page load
 setupMuteButtons();
 preloadSounds();
