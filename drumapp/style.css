@@ -104,6 +104,12 @@ body {
     background: orange;
 }
 
+.bpmdiv {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5PX;
+}
+
 .bpm-container {
     display: flex;
     align-items: center;
