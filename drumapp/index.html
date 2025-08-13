@@ -2,45 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Who Needs Drummers</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="app-container">
+<div id="app">
     <div class="logo">
-        <div class="title">Who Needs Drummers</div>
-        <div class="subtitle">by MeX1Co</div>
+        <h1>Who Needs Drummers</h1>
+        <h2>by MeX1Co</h2>
     </div>
 
-    <button id="kitButton" class="kit-button">rock</button>
+    <button id="kitBtn" class="kit-button">rock</button>
 
-    <div id="grid" class="grid-container">
-        <img src="bg-grid.png" alt="Grid Background" class="grid-bg">
-    </div>
+    <div id="grid"></div>
 
     <div class="mute-buttons">
-        <button id="but1" class="mute-btn">1</button>
-        <button id="but2" class="mute-btn">2</button>
-        <button id="but3" class="mute-btn">3</button>
-        <button id="but4" class="mute-btn">4</button>
+        <button id="but1" class="mute-btn unmuted">1</button>
+        <button id="but2" class="mute-btn unmuted">2</button>
+        <button id="but3" class="mute-btn unmuted">3</button>
+        <button id="but4" class="mute-btn unmuted">4</button>
         <button id="but5" class="mute-btn">5</button>
         <button id="but6" class="mute-btn">6</button>
         <button id="but7" class="mute-btn">7</button>
         <button id="but8" class="mute-btn">8</button>
     </div>
 
-    <div class="play-buttons">
-        <button id="startBtn" class="control-btn">Start</button>
-        <button id="stopBtn" class="control-btn">Stop</button>
+    <div class="transport-buttons">
+        <button id="startBtn" class="transport-btn">Start</button>
+        <button id="stopBtn" class="transport-btn">Stop</button>
     </div>
 
-    <div class="bpm-container">
-        <input type="range" id="bpmSlider" min="40" max="220" step="5" value="120">
-        <span id="bpmValue">120 BPM</span>
-    </div>
+    <input id="bpm" class="bpm-slider" type="range" min="40" max="220" step="5" value="120">
 </div>
 
 <script src="script.js"></script>
