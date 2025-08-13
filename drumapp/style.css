@@ -1,6 +1,13 @@
+:root {
+    --gray: rgb(39, 39, 39);
+    --black: rgb(5, 5, 5);
+    --white: rgb(235, 235, 235);
+    --color: rgb(0, 195, 195);
+}
+
 body {
-    background: #000;
-    color: white;
+    background: var(--black);
+    color: var(--white);
     font-family: 'Orbitron', sans-serif;
     display: flex;
     justify-content: center;
@@ -8,7 +15,7 @@ body {
 }
 
 #app {
-    border: 3px solid orange;
+    border: 3px solid var(--color);
     border-radius: 20px;
     padding: 10px;
     max-width: 460px;
@@ -31,7 +38,7 @@ body {
 }
 .kit-button {
     width: 100%;
-    background: white;
+    background: var(--white);
     color: black;
     padding: 5px;
     margin-top: 5px;
@@ -40,7 +47,7 @@ body {
     font-size: 1em;
 }
 .kit-button.ready {
-    background: orange;
+    background: var(--color);
     color: white;
 }
 #grid {
@@ -55,14 +62,14 @@ body {
     position: absolute;
     width: 12%;
     aspect-ratio: 1 / 1;
-    background: orange;
+    background: var(--color);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.7em;
     cursor: grab;
-    color: white;
+    color: var(--white);
     user-select: none;
 }
 .mute-buttons {
@@ -75,14 +82,14 @@ body {
     aspect-ratio: 1 / 1;
     border: none;
     border-radius: 10px;
-    background: grey;
+    background: var(--gray);
     color: white;
     font-size: 0.9em;
     cursor: pointer;
     transition: background 0.2s;
 }
 .mute-btn.unmuted {
-    background: orange;
+    background: var(--color);
 }
 .transport-buttons {
     margin-top: 5px;
@@ -94,14 +101,14 @@ body {
     height: 50px;
     border: none;
     border-radius: 10px;
-    background: grey;
-    color: white;
+    background: var(--gray);
+    color: var(--white);
     font-size: 1em;
     cursor: pointer;
     transition: background 0.2s;
 }
 .transport-btn.active {
-    background: orange;
+    background: var(--color);
 }
 
 .bpmdiv {
@@ -125,7 +132,7 @@ body {
   -webkit-appearance: none;
   width: 60%;
   height: 20px;
-  background: #d3d3d3;
+  background: var(--gray);
   outline: none;
   opacity: 1;
   -webkit-transition: .2s;
@@ -137,13 +144,13 @@ body {
   appearance: none;
   width: 25px;
   height: 25px;
-  background: #04AA6D;
+  background: var(--color);
   cursor: pointer;
 }
 
 .bpm-slider::-moz-range-thumb {
   width: 25px;
   height: 25px;
-  background: #04AA6D;
+  background: var(--color);
   cursor: pointer;
 }
