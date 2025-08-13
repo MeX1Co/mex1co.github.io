@@ -104,7 +104,7 @@ body {
     background: orange;
 }
 
-.bpm {
+.bpm-container {
     display: flex;
     align-items: center;
     gap: 10px;
