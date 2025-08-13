@@ -74,6 +74,44 @@ body {
     box-shadow: 0px 0px 10px 5px var(--color);
 }
 
+/* icon inside .drum and inside mute buttons */
+.drum .icon {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  pointer-events: none; /* so clicks go to the parent .drum if needed */
+  display: block;
+}
+
+/* mute button icon */
+.mute-btn .icon {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  pointer-events: none; /* let the button handle clicks */
+  display: block;
+  margin: auto; /* center inside the button */
+}
+
+/* keep the previous muted visual behavior for the drum container
+.drum.muted {
+  background-color: var(--gray) !important;
+  box-shadow: none !important;
+}    */
+
+/* optional: also visually dim the icon when muted (keeps icon readable but subdued) */
+.drum.muted .icon,
+.mute-btn:not(.unmuted) .icon { /* buttons that are not unmuted show dimmed icon */
+  filter: grayscale(100%) opacity(0.6);
+}
+
+/* icons on active buttons remain full color */
+.mute-btn.unmuted .icon {
+  filter: none;
+}
+
+
+
 .drum.muted {
     background-color: var(--gray) !important;
     box-shadow: none !important;
