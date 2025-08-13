@@ -105,7 +105,14 @@ body {
 .transport-btn.active {
     background: orange;
 }
-.bpm-slider {
+
+.bpm-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-top: 5px;
-    width: 100%;
+}
+
+#bpmSlider {
+    flex: 1;
 }
