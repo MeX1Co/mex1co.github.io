@@ -73,7 +73,14 @@ function setupMuteButtons() {
             btn.addEventListener('click', () => {
                 muteStates[i] = !muteStates[i];
                 btn.classList.toggle('unmuted', muteStates[i]);
+
+                // Find matching drum and update style
+                const drumEl = document.querySelector(`.drum[data-index="${i}"]`);
+                if (drumEl) {
+                drumEl.classList.toggle('muted', !muteStates[i]);
+                }
             });
+
         } else {
             // no instrument assigned yet -> mark inactive
             btn.disabled = true;
