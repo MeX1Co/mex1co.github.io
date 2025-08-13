@@ -5,7 +5,7 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const kit = [
     { name: 'kick', file: 'kick.mp3' },        // but1
     { name: 'snare', file: 'snare.mp3' },      // but2
-    { name: 'hihat_closed', file: 'hihat_closed.mp3' } // but3 (controls closed+open)
+    { name: 'hihat', file: 'hihat_closed.mp3' } // but3 (controls closed+open)
 ];
 
 // Extra samples for special cases (open hihat)
@@ -40,7 +40,7 @@ const drumPatterns = {
         [1,0,1,1, 0,1,0,1, 1,1,0,1, 0,1,1,0]
     ],
     // hi-hat lane uses 0/1/2 (0 nothing, 1 closed, 2 open)
-    hihat_closed: [
+    hihat: [
         [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
         [1,0,1,0, 1,0,1,2, 1,0,1,0, 1,0,1,2],
         [1,1,1,1, 0,0,0,0, 1,1,1,1, 0,0,0,0],
@@ -215,7 +215,7 @@ let openHihatNode = null;
 
 function playSound(name, loudness, time = 0) {
     // Stop open hihat when closed plays
-    if (name === 'hihat_closed' && openHihatNode) {
+    if (name === 'hihat' && openHihatNode) {
         try { openHihatNode.stop(time); } catch (e) {}
         openHihatNode = null;
     }
@@ -264,9 +264,9 @@ function scheduler() {
 
         const stepVal = pattern[currentStep];
 
-        if (name === 'hihat_closed') {
+        if (name === 'hihat') {
             if (stepVal === 1) {
-                playSound('hihat_closed', loudness, now + 0.05);
+                playSound('hihat', loudness, now + 0.05);
             } else if (stepVal === 2) {
                 playSound('hihat_open', loudness, now + 0.05);
             }
