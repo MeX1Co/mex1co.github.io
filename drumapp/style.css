@@ -123,8 +123,8 @@ body {
 
 .bpm-slider {
   -webkit-appearance: none;
-  width: 100%;
-  height: 25px;
+  width: 60%;
+  height: 20px;
   background: #d3d3d3;
   outline: none;
   opacity: 1;
