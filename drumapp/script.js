@@ -5,8 +5,9 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const kit = [
     { name: 'kick', file: 'kick.mp3' },        // but1
     { name: 'snare', file: 'snare.mp3' },      // but2
-    { name: 'hihat', file: 'hihat_closed.mp3' },      // but2
-    { name: 'tomhigh', file: 'tom_high.mp3' } // but3 (controls closed+open)
+    { name: 'hihat', file: 'hihat_closed.mp3' },     // but3
+    { name: 'tomhigh', file: 'tom_high.mp3' } ,     // but3
+    { name: 'tomfloor', file: 'tom_low.mp3' }// but4
 ];
 
 // Extra samples for special cases (open hihat)
@@ -69,6 +70,18 @@ const drumPatterns = {
         [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,1],   // shifting accents  
         [1,1,1,1, 0,1,0,1, 1,0,1,0, 1,1,1,1],   // almost continuous  
         [1,0,1,1, 1,1,0,1, 0,1,1,1, 1,1,1,0]   // highly varied  
+    ],
+    tomfloor: [
+        [0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],   // single hit on step 5  
+        [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],   // steps 1 & 9  
+        [0,0,0,1, 0,0,0,1, 0,0,0,1, 0,0,0,1],   // every 4th step  
+        [0,0,1,0, 0,1,0,0, 1,0,0,0, 0,0,1,0],   // staggered triplets feel  
+        [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1],   // constant 8ths  
+        [1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1],   // alternating pairs  
+        [1,0,0,1, 0,1,1,0, 1,0,0,1, 0,1,1,0],   // off-beat accents  
+        [1,1,0,1, 1,0,1,1, 1,1,0,1, 1,0,1,1],   // denser low-tom pulse  
+        [1,0,1,1, 0,1,1,1, 1,1,0,1, 1,0,1,1],  // thick, rolling fill  
+        [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1]   // continuous low tom  
     ]
 };
 
@@ -391,7 +404,8 @@ const drumNoteMap = {
   snare: 38,
   hihat: 42,
   hihat_open: 46,
-  tomhigh: 48
+  tomhigh: 48,
+  tomfloor: 41
 };
 
 
