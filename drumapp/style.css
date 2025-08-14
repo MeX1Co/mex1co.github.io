@@ -118,6 +118,7 @@ body {
 }
 
 .mute-buttons {
+    -webkit-tap-highlight-color: transparent;
     margin-top: 5px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -137,6 +138,7 @@ body {
     background: var(--color);
 }
 .transport-buttons {
+    -webkit-tap-highlight-color: transparent;
     margin-top: 5px;
     display: flex;
     gap: 5px;
