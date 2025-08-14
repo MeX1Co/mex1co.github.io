@@ -102,7 +102,7 @@ const grid = document.getElementById('grid');
 let gridSize;
 
 // Mute states for but1..but8 (true = unmuted/active). first 3 default to unmuted
-const muteStates = [true, true, true, true, false, false, false, false];
+const muteStates = [true, true, true, true, true, true, false, false];
 
 // Setup mute buttons (but1..but8). but1..but3 map to kit indices 0..2
 function setupMuteButtons() {
