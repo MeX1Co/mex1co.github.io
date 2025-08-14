@@ -393,7 +393,7 @@ function exportPatternToMIDI() {
   track.setTempo(bpm);
 
   const PPQ = 512;              // pulses per quarter note
-  const sixteenthTicks = PPQ / 4;  // 32 ticks = one 16th
+  const sixteenthTicks = PPQ / 16;  // 32 ticks = one 16th
 
   const events = [];
 
