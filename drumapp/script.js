@@ -6,6 +6,7 @@ const kit = [
     { name: 'kick', file: 'kick.mp3' },        // but1
     { name: 'snare', file: 'snare.mp3' },      // but2
     { name: 'hihat', file: 'hihat_closed.mp3' },     // but3
+    { name: 'crash', file: 'crash.mp3' },     // but3
     { name: 'tomhigh', file: 'tom_high.mp3' } ,     // but3
     { name: 'tomfloor', file: 'tom_low.mp3' }// but4
 ];
@@ -58,7 +59,18 @@ const drumPatterns = {
         [1,1,1,2, 1,1,2,1, 2,1,1,1, 1,2,1,1],
         [2,2,1,2, 1,2,2,1, 2,1,2,2, 1,2,1,2]
     ],
-    // hi-hat lane uses 0/1/2 (0 nothing, 1 closed, 2 open)
+    crash: [
+        [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],   // crash on downbeat  
+        [1,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],   // downbeat & bar 2  
+        [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],   // bars 1 & 3  
+        [1,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],   // bars 1 & 4  
+        [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],   // every bar start  
+        [1,0,0,1, 0,0,0,1, 1,0,0,1, 0,0,0,1],   // bar starts & ends  
+        [1,0,0,0, 0,0,0,1, 1,0,0,0, 0,0,0,1],   // mixed bar-start/ends  
+        [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1],   // end-heavy crash  
+        [1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1],   // alternating 8ths  
+        [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1]    // crash every step  
+    ],
     tomhigh: [
         [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],  // single hit on step 1  
         [1,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],   // steps 1 & 5  
@@ -404,6 +416,7 @@ const drumNoteMap = {
   snare: 38,
   hihat: 42,
   hihat_open: 46,
+  crash: 49,
   tomhigh: 48,
   tomfloor: 41
 };
