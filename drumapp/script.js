@@ -371,14 +371,12 @@ bpmSlider.addEventListener("input", () => {
     bpmValue.textContent = `${bpmSlider.value} BPM`;
 });
 
-
-
-// --- MIDI export (fixed timing & simultaneity) -----------------------
+// --- MIDI export (per-drum NoteEvents so simultaneous hits stay simultaneous) ---
 const drumNoteMap = {
-  kick: 36,        // Bass Drum 1
-  snare: 38,       // Acoustic Snare
-  hihat: 42,       // Closed Hi-Hat
-  hihat_open: 46   // Open Hi-Hat
+  kick: 36,
+  snare: 38,
+  hihat: 42,
+  hihat_open: 46
 };
 
 function exportPatternToMIDI() {
@@ -394,14 +392,13 @@ function exportPatternToMIDI() {
   track.setTempo(bpm);
 
   const events = [];
-  let pendingRests = 0; // counts empty 16th steps before next sounding step
+  let pendingRests = 0;
 
-  // iterate steps 0..15
+  // step 0..15
   for (let step = 0; step < 16; step++) {
-    const pitchesThisStep = [];
-    let stepMaxVelocity = 0;
+    const hits = []; // { pitch, vel } for this step
 
-    // collect hits from each .drum (respecting mute states and positions)
+    // gather hits from each drum
     document.querySelectorAll('.drum').forEach(el => {
       const kitIndex = parseInt(el.dataset.index, 10);
       if (!muteStates[kitIndex]) return; // skip muted
@@ -417,43 +414,40 @@ function exportPatternToMIDI() {
 
       if (name === 'hihat') {
         if (stepVal === 1) {
-          pitchesThisStep.push(drumNoteMap.hihat);
+          hits.push({ pitch: drumNoteMap.hihat, vel: Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100))) });
         } else if (stepVal === 2) {
-          pitchesThisStep.push(drumNoteMap.hihat_open);
+          hits.push({ pitch: drumNoteMap.hihat_open, vel: Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100))) });
         }
       } else {
         if (stepVal === 1 && drumNoteMap[name] !== undefined) {
-          pitchesThisStep.push(drumNoteMap[name]);
+          hits.push({ pitch: drumNoteMap[name], vel: Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100))) });
         }
       }
-
-      // compute per-drum velocity candidate from vertical position (0..1 -> 1..100)
-      const vel = Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100)));
-      if (vel > stepMaxVelocity) stepMaxVelocity = vel;
     });
 
-    if (pitchesThisStep.length === 0) {
-      // accumulate empty steps
+    if (hits.length === 0) {
       pendingRests++;
     } else {
-      // Build a NoteEvent for the simultaneous pitches at this step.
-      // Use pendingRests (array of '16') as wait so the event falls in the correct place.
+      // create NoteEvent per hit; first uses accumulated wait, others use wait:'0'
       const waitValue = pendingRests > 0 ? Array(pendingRests).fill('16') : undefined;
 
-      events.push(new MidiWriter.NoteEvent({
-        pitch: pitchesThisStep,
-        duration: '16',
-        wait: waitValue,        // e.g. ['16','16'] if two empty 16ths before this event
-        velocity: stepMaxVelocity || 100,
-        channel: 10
-      }));
+      for (let i = 0; i < hits.length; i++) {
+        const hit = hits[i];
+        const noteEvent = new MidiWriter.NoteEvent({
+          pitch: [hit.pitch],
+          duration: '16',
+          wait: (i === 0) ? waitValue : '0',
+          velocity: hit.vel,
+          channel: 10
+        });
+        events.push(noteEvent);
+      }
 
-      // reset pending rests after placing this event
       pendingRests = 0;
     }
-  } // end step loop
+  }
 
-  // Add events sequentially so wait/duration are honored in order
+  // Add events sequentially (so waits and '0' waits are respected)
   track.addEvent(events, function(evt, idx) {
     return { sequential: true };
   });
@@ -461,19 +455,20 @@ function exportPatternToMIDI() {
   const writer = new MidiWriter.Writer(track);
   const blob = new Blob([writer.buildFile()], { type: 'audio/midi' });
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement('a');
   a.href = url;
   a.download = 'pattern.mid';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// hook (if not already hooked)
+// ensure hook
 const downloadBtn = document.getElementById('downloadBtn');
 if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
-
 
 
 // initialize UI + load kit once on page load
