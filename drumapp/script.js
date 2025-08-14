@@ -379,7 +379,6 @@ const drumNoteMap = {
   hihat_open: 46
 };
 
-
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
     alert('MidiWriterJS not loaded. Please include it.');
@@ -389,20 +388,18 @@ function exportPatternToMIDI() {
   const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
   const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
 
+  const PPQ = 128;                           // pulses per quarter note
+  const ticksPerSixteenth = PPQ / 4;         // 32 ticks per 16th
+  const steps = 16;
+
   const track = new MidiWriter.Track();
   track.setTempo(bpm);
+  track.setTimeSignature(4, 4);
 
-  const PPQ = 512;              // pulses per quarter note
-  const sixteenthTicks = PPQ / 16;  // 32 ticks = one 16th
-
-  const events = [];
-
-  // Add a tiny initial rest of 1 tick to ensure proper first-step placement
-  let initialOffset = 1;
-
-  // for each of the 16 steps
-  for (let step = 0; step < 16; step++) {
-    const stepStartTick = initialOffset + step * sixteenthTicks;
+  // For each step, collect all hits at that same absolute tick, then add as a group.
+  for (let step = 0; step < steps; step++) {
+    const startTick = step * ticksPerSixteenth;
+    const stepEvents = [];
 
     document.querySelectorAll('.drum').forEach(el => {
       const kitIndex = +el.dataset.index;
@@ -423,22 +420,28 @@ function exportPatternToMIDI() {
       } else if (val === 1 && drumNoteMap[name] !== undefined) {
         pitch = drumNoteMap[name];
       }
+
       if (pitch !== null) {
         const vel = Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100)));
-        events.push(new MidiWriter.NoteEvent({
+        stepEvents.push(new MidiWriter.NoteEvent({
           pitch: [pitch],
           duration: '16',
           velocity: vel,
           channel: 10,
-          tick: stepStartTick
+          tick: startTick            // absolute, integer tick
         }));
       }
     });
+
+    // Only add if there are hits this step; empty steps are naturally preserved by absolute ticks.
+    if (stepEvents.length) {
+      // Adding an array schedules them simultaneously at the same tick.
+      track.addEvent(stepEvents);
+    }
   }
 
-  track.addEvent(events);
+  const writer = new MidiWriter.Writer([track], { timeDivision: PPQ });
 
-  const writer = new MidiWriter.Writer(track);
   const blob = new Blob([writer.buildFile()], { type: 'audio/midi' });
   const url = URL.createObjectURL(blob);
 
