@@ -372,6 +372,132 @@ bpmSlider.addEventListener("input", () => {
 });
 
 
+
+// --- MIDI export --------------------------------------------
+const drumNoteMap = {
+  kick: 36,        // Bass Drum 1
+  snare: 38,       // Acoustic Snare
+  hihat: 42,       // Closed Hi-Hat
+  hihat_open: 46   // Open Hi-Hat (extraSamples)
+};
+
+/**
+ * Build and download a MIDI file reflecting the currently-played 16-step
+ * patterns for the visible .drum elements (uses getPattern/getLoudness).
+ */
+function exportPatternToMIDI() {
+  if (typeof MidiWriter === 'undefined') {
+    alert('MidiWriterJS not loaded. Make sure you included the CDN script in index.html.');
+    return;
+  }
+
+  // get tempo (BPM) from UI
+  const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+  const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
+
+  // Create a track and set tempo. Percussion works on channel 10.
+  const track = new MidiWriter.Track();
+  track.setTempo(bpm);
+
+  // We'll create one NoteEvent per 16th step. Each NoteEvent may contain
+  // multiple pitches (simultaneous drums).
+  const stepEvents = [];
+
+  // iterate steps 0..15
+  for (let step = 0; step < 16; step++) {
+    const pitchesThisStep = [];
+    let stepMaxVelocity = 0; // 1..100 for MidiWriterJS
+
+    // iterate over each .drum element (one per kit item)
+    document.querySelectorAll('.drum').forEach(el => {
+      const kitIndex = parseInt(el.dataset.index, 10);
+
+      // respect mute state and only export unmuted instruments
+      if (!muteStates[kitIndex]) return;
+
+      const name = el.dataset.name;                // 'kick','snare','hihat'
+      const x = parseFloat(el.style.left);
+      const y = parseFloat(el.style.top);
+
+      const pattern = getPattern(name, x);
+      if (!pattern) return;
+
+      const stepVal = pattern[step];
+
+      if (name === 'hihat') {
+        if (stepVal === 1) {
+          pitchesThisStep.push(drumNoteMap.hihat);
+        } else if (stepVal === 2) {
+          pitchesThisStep.push(drumNoteMap.hihat_open);
+        }
+      } else {
+        if (stepVal === 1) {
+          // normal drums use 1 == hit
+          if (drumNoteMap[name] !== undefined) {
+            pitchesThisStep.push(drumNoteMap[name]);
+          }
+        }
+      }
+
+      // compute velocity from vertical position (your existing getLoudness)
+      // getLoudness returns 0..1; map to 1..100
+      const loudness = getLoudness(y);
+      const vel = Math.max(1, Math.min(100, Math.round(loudness * 100)));
+      if (vel > stepMaxVelocity) stepMaxVelocity = vel;
+    });
+
+    // if any pitches at this step, create a NoteEvent for them with duration '16' (16th note)
+    if (pitchesThisStep.length > 0) {
+      stepEvents.push(new MidiWriter.NoteEvent({
+        pitch: pitchesThisStep,
+        duration: '16',
+        velocity: stepMaxVelocity || 100,
+        channel: 10       // percussion channel (keep 10)
+      }));
+    } else {
+      // If no notes this step, add a rest NoteEvent with wait '16' to advance time.
+      // MidiWriterJS supports a rest by setting wait without pitch; create a short empty event.
+      // Use a NoteEvent with wait: '16' (no pitch) — MidiWriterJS allows wait on NoteEvent.
+      stepEvents.push(new MidiWriter.NoteEvent({
+        wait: '16',
+        duration: '16',
+        pitch: [],          // empty
+        channel: 10
+      }));
+    }
+  } // end steps loop
+
+  // Add all step events to the track, sequentially
+  // Passing sequential:true ensures events are placed one after another.
+  track.addEvent(stepEvents, function(event, index) {
+    return { sequential: true };
+  });
+
+  // Build writer and trigger download
+  const write = new MidiWriter.Writer(track);
+
+  // Use buildFile() to get binary data, then make blob -> download
+  const midiData = write.buildFile();
+  const blob = new Blob([midiData], { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pattern.mid';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// hook to download button
+const downloadBtn = document.getElementById('downloadBtn');
+if (downloadBtn) {
+  downloadBtn.addEventListener('click', exportPatternToMIDI);
+}
+
+
+
 // initialize UI + load kit once on page load
 setupMuteButtons();
 preloadSounds();
