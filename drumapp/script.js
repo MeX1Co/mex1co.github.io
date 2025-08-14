@@ -379,6 +379,7 @@ const drumNoteMap = {
   hihat_open: 46
 };
 
+
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
     alert('MidiWriterJS not loaded. Please include it.');
@@ -396,7 +397,6 @@ function exportPatternToMIDI() {
   track.setTempo(bpm);
   track.setTimeSignature(4, 4);
 
-  // For each step, collect all hits at that same absolute tick, then add as a group.
   for (let step = 0; step < steps; step++) {
     const startTick = step * ticksPerSixteenth;
     const stepEvents = [];
@@ -428,15 +428,18 @@ function exportPatternToMIDI() {
           duration: '16',
           velocity: vel,
           channel: 10,
-          tick: startTick            // absolute, integer tick
+          tick: step === 0 ? 0 : startTick   // <-- lock step 0 to tick 0
         }));
       }
     });
 
-    // Only add if there are hits this step; empty steps are naturally preserved by absolute ticks.
+    if (step === 0 && stepEvents.length) {
+      // Force all events in step 0 to tick 0 to avoid drift
+      stepEvents.forEach(ev => ev.tick = 0);
+    }
+
     if (stepEvents.length) {
-      // Adding an array schedules them simultaneously at the same tick.
-      track.addEvent(stepEvents);
+      track.addEvent(stepEvents); // group simultaneous hits
     }
   }
 
