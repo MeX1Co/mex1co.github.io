@@ -378,6 +378,8 @@ const drumNoteMap = {
   hihat: 42,
   hihat_open: 46
 };
+
+/*
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
     alert('MidiWriterJS not loaded. Please include it.');
@@ -449,8 +451,99 @@ function exportPatternToMIDI() {
 
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
+*/
 // ensure hook
+
+function exportPatternToMIDI() {
+  if (typeof MidiWriter === 'undefined') {
+    alert('MidiWriterJS not loaded. Please include it.');
+    return;
+  }
+
+  const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+  const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
+
+  // Choose PPQ that matches your grid. 128 is fine for straight 16ths.
+  // If you plan on triplets/swing or finer grids, consider 1536.
+  const PPQ = 128;
+  const sixteenthTicks = PPQ / 4; // 32 ticks per 16th
+
+  const track = new MidiWriter.Track();
+  track.setTempo(bpm);
+  track.setTimeSignature(4, 4);
+
+  // Build notes with absolute start ticks (integers)
+  const notes = []; // { startTick, pitch, velocity }
+
+  // No initial 1-tick offset
+  for (let step = 0; step < 16; step++) {
+    const stepStartTick = step * sixteenthTicks;
+
+    document.querySelectorAll('.drum').forEach(el => {
+      const kitIndex = +el.dataset.index;
+      if (!muteStates[kitIndex]) return;
+
+      const name = el.dataset.name;
+      const x = parseFloat(el.style.left);
+      const y = parseFloat(el.style.top);
+      const pattern = getPattern(name, x);
+      if (!pattern) return;
+
+      const val = pattern[step];
+      let pitch = null;
+
+      if (name === 'hihat') {
+        if (val === 1) pitch = drumNoteMap.hihat;
+        else if (val === 2) pitch = drumNoteMap.hihat_open;
+      } else if (val === 1 && drumNoteMap[name] !== undefined) {
+        pitch = drumNoteMap[name];
+      }
+
+      if (pitch !== null) {
+        const vel = Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100)));
+        notes.push({
+          startTick: stepStartTick,
+          pitch,
+          velocity: vel,
+        });
+      }
+    });
+  }
+
+  // Sort by time and convert to integer delta waits
+  notes.sort((a, b) => a.startTick - b.startTick);
+
+  let lastTick = 0;
+  for (const n of notes) {
+    const wait = n.startTick - lastTick; // integer delta ticks
+    lastTick = n.startTick;
+
+    track.addEvent(new MidiWriter.NoteEvent({
+      pitch: [n.pitch],
+      velocity: n.velocity,      // 1–100 in midi-writer-js
+      channel: 10,               // GM drums
+      duration: '16',            // maps to sixteenth at the current PPQ
+      wait                       // integer ticks to wait before this note
+    }));
+  }
+
+  // Ensure the file uses the PPQ you computed against
+  const writer = new MidiWriter.Writer([track], { timeDivision: PPQ });
+
+  const blob = new Blob([writer.buildFile()], { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pattern.mid';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+
 const downloadBtn = document.getElementById('downloadBtn');
 if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
 
