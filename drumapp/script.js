@@ -373,49 +373,40 @@ bpmSlider.addEventListener("input", () => {
 
 
 
-// --- MIDI export --------------------------------------------
+// --- MIDI export (fixed timing & simultaneity) -----------------------
 const drumNoteMap = {
   kick: 36,        // Bass Drum 1
   snare: 38,       // Acoustic Snare
   hihat: 42,       // Closed Hi-Hat
-  hihat_open: 46   // Open Hi-Hat (extraSamples)
+  hihat_open: 46   // Open Hi-Hat
 };
 
-/**
- * Build and download a MIDI file reflecting the currently-played 16-step
- * patterns for the visible .drum elements (uses getPattern/getLoudness).
- */
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
-    alert('MidiWriterJS not loaded. Make sure you included the CDN script in index.html.');
+    alert('MidiWriterJS not loaded. Include the CDN script before script.js.');
     return;
   }
 
-  // get tempo (BPM) from UI
   const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
   const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
 
-  // Create a track and set tempo. Percussion works on channel 10.
   const track = new MidiWriter.Track();
   track.setTempo(bpm);
 
-  // We'll create one NoteEvent per 16th step. Each NoteEvent may contain
-  // multiple pitches (simultaneous drums).
-  const stepEvents = [];
+  const events = [];
+  let pendingRests = 0; // counts empty 16th steps before next sounding step
 
   // iterate steps 0..15
   for (let step = 0; step < 16; step++) {
     const pitchesThisStep = [];
-    let stepMaxVelocity = 0; // 1..100 for MidiWriterJS
+    let stepMaxVelocity = 0;
 
-    // iterate over each .drum element (one per kit item)
+    // collect hits from each .drum (respecting mute states and positions)
     document.querySelectorAll('.drum').forEach(el => {
       const kitIndex = parseInt(el.dataset.index, 10);
+      if (!muteStates[kitIndex]) return; // skip muted
 
-      // respect mute state and only export unmuted instruments
-      if (!muteStates[kitIndex]) return;
-
-      const name = el.dataset.name;                // 'kick','snare','hihat'
+      const name = el.dataset.name;
       const x = parseFloat(el.style.left);
       const y = parseFloat(el.style.top);
 
@@ -431,56 +422,45 @@ function exportPatternToMIDI() {
           pitchesThisStep.push(drumNoteMap.hihat_open);
         }
       } else {
-        if (stepVal === 1) {
-          // normal drums use 1 == hit
-          if (drumNoteMap[name] !== undefined) {
-            pitchesThisStep.push(drumNoteMap[name]);
-          }
+        if (stepVal === 1 && drumNoteMap[name] !== undefined) {
+          pitchesThisStep.push(drumNoteMap[name]);
         }
       }
 
-      // compute velocity from vertical position (your existing getLoudness)
-      // getLoudness returns 0..1; map to 1..100
-      const loudness = getLoudness(y);
-      const vel = Math.max(1, Math.min(100, Math.round(loudness * 100)));
+      // compute per-drum velocity candidate from vertical position (0..1 -> 1..100)
+      const vel = Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100)));
       if (vel > stepMaxVelocity) stepMaxVelocity = vel;
     });
 
-    // if any pitches at this step, create a NoteEvent for them with duration '16' (16th note)
-    if (pitchesThisStep.length > 0) {
-      stepEvents.push(new MidiWriter.NoteEvent({
+    if (pitchesThisStep.length === 0) {
+      // accumulate empty steps
+      pendingRests++;
+    } else {
+      // Build a NoteEvent for the simultaneous pitches at this step.
+      // Use pendingRests (array of '16') as wait so the event falls in the correct place.
+      const waitValue = pendingRests > 0 ? Array(pendingRests).fill('16') : undefined;
+
+      events.push(new MidiWriter.NoteEvent({
         pitch: pitchesThisStep,
         duration: '16',
+        wait: waitValue,        // e.g. ['16','16'] if two empty 16ths before this event
         velocity: stepMaxVelocity || 100,
-        channel: 10       // percussion channel (keep 10)
-      }));
-    } else {
-      // If no notes this step, add a rest NoteEvent with wait '16' to advance time.
-      // MidiWriterJS supports a rest by setting wait without pitch; create a short empty event.
-      // Use a NoteEvent with wait: '16' (no pitch) — MidiWriterJS allows wait on NoteEvent.
-      stepEvents.push(new MidiWriter.NoteEvent({
-        wait: '16',
-        duration: '16',
-        pitch: [],          // empty
         channel: 10
       }));
-    }
-  } // end steps loop
 
-  // Add all step events to the track, sequentially
-  // Passing sequential:true ensures events are placed one after another.
-  track.addEvent(stepEvents, function(event, index) {
+      // reset pending rests after placing this event
+      pendingRests = 0;
+    }
+  } // end step loop
+
+  // Add events sequentially so wait/duration are honored in order
+  track.addEvent(events, function(evt, idx) {
     return { sequential: true };
   });
 
-  // Build writer and trigger download
-  const write = new MidiWriter.Writer(track);
-
-  // Use buildFile() to get binary data, then make blob -> download
-  const midiData = write.buildFile();
-  const blob = new Blob([midiData], { type: 'audio/midi' });
+  const writer = new MidiWriter.Writer(track);
+  const blob = new Blob([writer.buildFile()], { type: 'audio/midi' });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement('a');
   a.href = url;
   a.download = 'pattern.mid';
@@ -490,11 +470,9 @@ function exportPatternToMIDI() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// hook to download button
+// hook (if not already hooked)
 const downloadBtn = document.getElementById('downloadBtn');
-if (downloadBtn) {
-  downloadBtn.addEventListener('click', exportPatternToMIDI);
-}
+if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
 
 
 
