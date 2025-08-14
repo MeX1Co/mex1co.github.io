@@ -378,7 +378,7 @@ const drumNoteMap = {
   hihat: 42,
   hihat_open: 46
 };
-/*
+
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
     alert('MidiWriterJS not loaded. Please include it.');
@@ -391,7 +391,7 @@ function exportPatternToMIDI() {
   const track = new MidiWriter.Track();
   track.setTempo(bpm);
 
-  const PPQ = 128;              // pulses per quarter note
+  const PPQ = 480;              // pulses per quarter note
   const sixteenthTicks = PPQ / 4;  // 32 ticks = one 16th
 
   const events = [];
@@ -455,69 +455,6 @@ function exportPatternToMIDI() {
 const downloadBtn = document.getElementById('downloadBtn');
 if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
 
-*/
-function exportPatternWithJZZ() {
-  const PPQ = 480;
-  
-  // Create SMF type 0 or 1 with high PPQ
-  const smf = new JZZ.MIDI.SMF(0, PPQ);
-  const trk = new JZZ.MIDI.SMF.MTrk();
-  smf.push(trk);
-
-  const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
-  const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
-  trk.add(0, JZZ.MIDI.smfBPM(bpm));
-
-  const ticksPerStep = PPQ / 4;
-
-  document.querySelectorAll('.drum').forEach(el => {
-    const kitIndex = +el.dataset.index;
-    if (!muteStates[kitIndex]) return;
-
-    const name = el.dataset.name;
-    const pattern = getPattern(name, parseFloat(el.style.left));
-    if (!pattern) return;
-
-    for (let step = 0; step < 16; step++) {
-      let pitch = null;
-
-      const val = pattern[step];
-      if (name === 'hihat') {
-        if (val === 1) pitch = drumNoteMap.hihat;
-        else if (val === 2) pitch = drumNoteMap.hihat_open;
-      } else if (val === 1 && drumNoteMap[name] !== undefined) {
-        pitch = drumNoteMap[name];
-      }
-
-      if (pitch !== null) {
-        const tick = Math.round(step * ticksPerStep);
-        const vel = Math.max(1, Math.min(127, Math.round(getLoudness(parseFloat(el.style.top)) * 127)));
-        trk.add(tick, JZZ.MIDI.noteOn(9, pitch, vel));
-        trk.add(tick + ticksPerStep, JZZ.MIDI.noteOff(9, pitch, vel));
-      }
-    }
-  });
-
-  // Very important: end-of-track marker so DAWs recognize the track as complete
-  trk.smfEndOfTrack();
-
-  const midiData = smf.dump();
-  const blob = new Blob([midiData], { type: 'audio/midi' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'pattern_highres.mid';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-// Hook it up to your download button
-const downloadBtn = document.getElementById('downloadBtn');
-if (downloadBtn) {
-  downloadBtn.addEventListener('click', exportPatternWithJZZ);
-}
 
 // initialize UI + load kit once on page load
 setupMuteButtons();
