@@ -378,7 +378,6 @@ const drumNoteMap = {
   hihat: 42,
   hihat_open: 46
 };
-
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
     alert('MidiWriterJS not loaded. Please include it.');
