@@ -5,7 +5,8 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const kit = [
     { name: 'kick', file: 'kick.mp3' },        // but1
     { name: 'snare', file: 'snare.mp3' },      // but2
-    { name: 'hihat', file: 'hihat_closed.mp3' } // but3 (controls closed+open)
+    { name: 'hihat', file: 'hihat_closed.mp3' },      // but2
+    { name: 'tomhigh', file: 'tom_high.mp3' } // but3 (controls closed+open)
 ];
 
 // Extra samples for special cases (open hihat)
@@ -55,6 +56,19 @@ const drumPatterns = {
         [2,1,2,1, 1,2,1,2, 2,1,2,1, 1,2,1,2],
         [1,1,1,2, 1,1,2,1, 2,1,1,1, 1,2,1,1],
         [2,2,1,2, 1,2,2,1, 2,1,2,2, 1,2,1,2]
+    ],
+    // hi-hat lane uses 0/1/2 (0 nothing, 1 closed, 2 open)
+    tomhigh: [
+        [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],  // single hit on step 1  
+        [1,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0],   // steps 1 & 5  
+        [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],   // every 3rd step  
+        [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],   // diagonal fill  
+        [1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1],   // alternating 8ths  
+        [1,0,0,1, 0,1,0,1, 1,0,0,1, 0,1,0,1],   // syncopated 16ths  
+        [1,1,0,1, 1,0,1,1, 1,1,0,1, 1,0,1,1],   // denser fill  
+        [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,1],   // shifting accents  
+        [1,1,1,1, 0,1,0,1, 1,0,1,0, 1,1,1,1],   // almost continuous  
+        [1,0,1,1, 1,1,0,1, 0,1,1,1, 1,1,1,0]   // highly varied  
     ]
 };
 
@@ -63,7 +77,7 @@ const grid = document.getElementById('grid');
 let gridSize;
 
 // Mute states for but1..but8 (true = unmuted/active). first 3 default to unmuted
-const muteStates = [true, true, true, false, false, false, false, false];
+const muteStates = [true, true, true, true, false, false, false, false];
 
 // Setup mute buttons (but1..but8). but1..but3 map to kit indices 0..2
 function setupMuteButtons() {
@@ -376,8 +390,10 @@ const drumNoteMap = {
   kick: 36,
   snare: 38,
   hihat: 42,
-  hihat_open: 46
+  hihat_open: 46,
+  tomhigh: 48
 };
+
 
 
 function exportPatternToMIDI() {
