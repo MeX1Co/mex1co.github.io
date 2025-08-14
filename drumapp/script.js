@@ -452,6 +452,9 @@ function exportPatternToMIDI() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ensure hook
+const downloadBtn = document.getElementById('downloadBtn');
+if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
 
 // initialize UI + load kit once on page load
 setupMuteButtons();
