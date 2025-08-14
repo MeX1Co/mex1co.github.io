@@ -391,7 +391,7 @@ function exportPatternToMIDI() {
   const track = new MidiWriter.Track();
   track.setTempo(bpm);
 
-  const PPQ = 480;              // pulses per quarter note
+  const PPQ = 128;              // pulses per quarter note
   const sixteenthTicks = PPQ / 4;  // 32 ticks = one 16th
 
   const events = [];
