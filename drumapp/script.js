@@ -381,7 +381,7 @@ const drumNoteMap = {
 
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
-    alert('MidiWriterJS not loaded. Include the CDN script before script.js.');
+    alert('MidiWriterJS not loaded. Please include it.');
     return;
   }
 
@@ -391,23 +391,25 @@ function exportPatternToMIDI() {
   const track = new MidiWriter.Track();
   track.setTempo(bpm);
 
-  const PPQ = 128;              // MIDI pulses per quarter note
-  const sixteenthTicks = PPQ / 4;  // 32 ticks per 16th note
+  const PPQ = 128;              // pulses per quarter note
+  const sixteenthTicks = PPQ / 4;  // 32 ticks = one 16th
 
   const events = [];
 
-  // For each of the 16 steps
+  // Add a tiny initial rest of 1 tick to ensure proper first-step placement
+  let initialOffset = 1;
+
+  // for each of the 16 steps
   for (let step = 0; step < 16; step++) {
-    const stepStartTick = step * sixteenthTicks;
+    const stepStartTick = initialOffset + step * sixteenthTicks;
 
     document.querySelectorAll('.drum').forEach(el => {
-      const kitIndex = parseInt(el.dataset.index, 10);
+      const kitIndex = +el.dataset.index;
       if (!muteStates[kitIndex]) return;
 
       const name = el.dataset.name;
       const x = parseFloat(el.style.left);
       const y = parseFloat(el.style.top);
-
       const pattern = getPattern(name, x);
       if (!pattern) return;
 
@@ -420,10 +422,8 @@ function exportPatternToMIDI() {
       } else if (val === 1 && drumNoteMap[name] !== undefined) {
         pitch = drumNoteMap[name];
       }
-
       if (pitch !== null) {
         const vel = Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100)));
-
         events.push(new MidiWriter.NoteEvent({
           pitch: [pitch],
           duration: '16',
@@ -435,7 +435,6 @@ function exportPatternToMIDI() {
     });
   }
 
-  // Add all NoteEvents; MidiWriter handles tick sorting automatically.
   track.addEvent(events);
 
   const writer = new MidiWriter.Writer(track);
