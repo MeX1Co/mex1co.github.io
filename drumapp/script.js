@@ -378,7 +378,7 @@ const drumNoteMap = {
   hihat: 42,
   hihat_open: 46
 };
-
+/*
 function exportPatternToMIDI() {
   if (typeof MidiWriter === 'undefined') {
     alert('MidiWriterJS not loaded. Please include it.');
@@ -454,6 +454,78 @@ function exportPatternToMIDI() {
 // ensure hook
 const downloadBtn = document.getElementById('downloadBtn');
 if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
+
+*/
+
+function exportPatternWithJZZ() {
+  // PPQ: pulses per quarter note (higher = finer granularity)
+  const PPQ = 480;
+  const smf = new JZZ.MIDI.SMF(0, PPQ); // type 0, PPQ = 480
+  const trk = new JZZ.MIDI.SMF.MTrk();
+  smf.push(trk);
+  
+  // Set tempo in microseconds per quarter note
+  const bpmRaw = parseInt(document.getElementById('bpm').value, 10);
+  const bpm = (Number.isFinite(bpmRaw) && bpmRaw > 0) ? bpmRaw : 120;
+  trk.add(0, JZZ.MIDI.smfBPM(bpm));
+  
+  const ticksPerStep = PPQ / 4; // 16th note
+  
+  document.querySelectorAll('.drum').forEach(el => {
+    const kitIndex = +el.dataset.index;
+    if (!muteStates[kitIndex]) return;
+
+    const name = el.dataset.name;
+    const x = parseFloat(el.style.left);
+    const y = parseFloat(el.style.top);
+
+    const pattern = getPattern(name, x);
+    if (!pattern) return;
+
+    for (let step = 0; step < 16; step++) {
+      const val = pattern[step];
+      let pitch = null;
+
+      if (name === 'hihat') {
+        if (val === 1) pitch = drumNoteMap.hihat;
+        else if (val === 2) pitch = drumNoteMap.hihat_open;
+      } else if (val === 1 && drumNoteMap[name] !== undefined) {
+        pitch = drumNoteMap[name];
+      }
+
+      if (pitch !== null) {
+        const tick = Math.round(step * ticksPerStep);
+        const vel = Math.max(1, Math.min(127, Math.round(getLoudness(y) * 127)));
+
+        trk.add(tick, JZZ.MIDI.noteOn(9, pitch, vel));       // channel 10 (index 9)
+        trk.add(tick + ticksPerStep, JZZ.MIDI.noteOff(9, pitch, vel));
+      }
+    }
+  });
+
+  // Mark end of track
+  const endTick = 16 * ticksPerStep;
+  trk.smfEndOfTrack();
+  
+  // Export binary and download
+  const data = smf.dump();
+  const blob = new Blob([data], { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pattern_highres.mid';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Hook it up to your download button
+const downloadBtn = document.getElementById('downloadBtn');
+if (downloadBtn) {
+  downloadBtn.addEventListener('click', exportPatternWithJZZ);
+}
 
 // initialize UI + load kit once on page load
 setupMuteButtons();
