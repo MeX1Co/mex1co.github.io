@@ -396,7 +396,7 @@ function exportPatternToMIDI() {
   const events = [];
 
   // Add a tiny initial rest of 1 tick to ensure proper first-step placement
-  let initialOffset = 1;
+  let initialOffset = 0;
 
   // for each of the 16 steps
   for (let step = 0; step < 16; step++) {
