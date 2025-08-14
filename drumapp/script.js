@@ -391,17 +391,18 @@ function exportPatternToMIDI() {
   const track = new MidiWriter.Track();
   track.setTempo(bpm);
 
+  const PPQ = 128;              // MIDI pulses per quarter note
+  const sixteenthTicks = PPQ / 4;  // 32 ticks per 16th note
+
   const events = [];
-  let pendingRests = 0;
 
-  // step 0..15
+  // For each of the 16 steps
   for (let step = 0; step < 16; step++) {
-    const hits = []; // { pitch, vel } for this step
+    const stepStartTick = step * sixteenthTicks;
 
-    // gather hits from each drum
     document.querySelectorAll('.drum').forEach(el => {
       const kitIndex = parseInt(el.dataset.index, 10);
-      if (!muteStates[kitIndex]) return; // skip muted
+      if (!muteStates[kitIndex]) return;
 
       const name = el.dataset.name;
       const x = parseFloat(el.style.left);
@@ -410,47 +411,32 @@ function exportPatternToMIDI() {
       const pattern = getPattern(name, x);
       if (!pattern) return;
 
-      const stepVal = pattern[step];
+      const val = pattern[step];
+      let pitch = null;
 
       if (name === 'hihat') {
-        if (stepVal === 1) {
-          hits.push({ pitch: drumNoteMap.hihat, vel: Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100))) });
-        } else if (stepVal === 2) {
-          hits.push({ pitch: drumNoteMap.hihat_open, vel: Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100))) });
-        }
-      } else {
-        if (stepVal === 1 && drumNoteMap[name] !== undefined) {
-          hits.push({ pitch: drumNoteMap[name], vel: Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100))) });
-        }
+        if (val === 1) pitch = drumNoteMap.hihat;
+        else if (val === 2) pitch = drumNoteMap.hihat_open;
+      } else if (val === 1 && drumNoteMap[name] !== undefined) {
+        pitch = drumNoteMap[name];
+      }
+
+      if (pitch !== null) {
+        const vel = Math.max(1, Math.min(100, Math.round(getLoudness(y) * 100)));
+
+        events.push(new MidiWriter.NoteEvent({
+          pitch: [pitch],
+          duration: '16',
+          velocity: vel,
+          channel: 10,
+          tick: stepStartTick
+        }));
       }
     });
-
-    if (hits.length === 0) {
-      pendingRests++;
-    } else {
-      // create NoteEvent per hit; first uses accumulated wait, others use wait:'0'
-      const waitValue = pendingRests > 0 ? Array(pendingRests).fill('16') : undefined;
-
-      for (let i = 0; i < hits.length; i++) {
-        const hit = hits[i];
-        const noteEvent = new MidiWriter.NoteEvent({
-          pitch: [hit.pitch],
-          duration: '16',
-          wait: (i === 0) ? waitValue : '0',
-          velocity: hit.vel,
-          channel: 10
-        });
-        events.push(noteEvent);
-      }
-
-      pendingRests = 0;
-    }
   }
 
-  // Add events sequentially (so waits and '0' waits are respected)
-  track.addEvent(events, function(evt, idx) {
-    return { sequential: true };
-  });
+  // Add all NoteEvents; MidiWriter handles tick sorting automatically.
+  track.addEvent(events);
 
   const writer = new MidiWriter.Writer(track);
   const blob = new Blob([writer.buildFile()], { type: 'audio/midi' });
@@ -465,10 +451,6 @@ function exportPatternToMIDI() {
 
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
-// ensure hook
-const downloadBtn = document.getElementById('downloadBtn');
-if (downloadBtn) downloadBtn.addEventListener('click', exportPatternToMIDI);
 
 
 // initialize UI + load kit once on page load
