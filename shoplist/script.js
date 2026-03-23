@@ -71,6 +71,17 @@ function downloadJSON() {
 // -------------------------
 // Load from GitHub (See List)
 // -------------------------
+
+async function loadFromGitHub() {
+  const url = "https://raw.githubusercontent.com/MeX1Co/mex1co.github.io/main/shoplist/shopping_list.json";
+
+  const response = await fetch(url);
+  const json = await response.json();
+
+  renderSeeList(json.items);
+}
+
+/*
 async function loadFromGitHub() {
   const url = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/shopping_list.json";
 
@@ -79,6 +90,7 @@ async function loadFromGitHub() {
 
   renderSeeList(json.items);
 }
+*/
 
 function renderSeeList(items) {
   const ul = document.getElementById("seeList");
