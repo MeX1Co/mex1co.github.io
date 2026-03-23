@@ -73,7 +73,7 @@ function downloadJSON() {
 // -------------------------
 
 async function loadFromGitHub() {
-  const url = "https://raw.githubusercontent.com/MeX1Co/mex1co.github.io/shoplist/shopping_list.json";
+  const url = "https://raw.githubusercontent.com/MeX1Co/mex1co.github.io/refs/heads/master/shoplist/shopping_list.json";
 
   const response = await fetch(url);
   const json = await response.json();
