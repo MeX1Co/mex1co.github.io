@@ -1,0 +1,24 @@
+{
+  "items": [
+    { "name": "Item01", "qty": 1, "checked": false },
+    { "name": "Item02", "qty": 1, "checked": false },
+    { "name": "Item03", "qty": 1, "checked": false },
+    { "name": "Item04", "qty": 1, "checked": false },
+    { "name": "Item05", "qty": 1, "checked": false },
+    { "name": "Item06", "qty": 1, "checked": false },
+    { "name": "Item07", "qty": 1, "checked": false },
+    { "name": "Item08", "qty": 1, "checked": false },
+    { "name": "Item09", "qty": 1, "checked": false },
+    { "name": "Item10", "qty": 1, "checked": false },
+    { "name": "Item11", "qty": 1, "checked": false },
+    { "name": "Item12", "qty": 1, "checked": false },
+    { "name": "Item13", "qty": 1, "checked": false },
+    { "name": "Item14", "qty": 1, "checked": false },
+    { "name": "Item15", "qty": 1, "checked": false },
+    { "name": "Item16", "qty": 1, "checked": false },
+    { "name": "Item17", "qty": 1, "checked": false },
+    { "name": "Item18", "qty": 1, "checked": false },
+    { "name": "Item19", "qty": 1, "checked": false },
+    { "name": "Item20", "qty": 1, "checked": false }
+  ]
+}
