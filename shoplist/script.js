@@ -1,8 +1,8 @@
+let list = [];
+
 // -------------------------
 // Local list handling
 // -------------------------
-let list = [];
-
 function loadLocalList() {
   const saved = localStorage.getItem("shoppingList");
   if (saved) list = JSON.parse(saved);
@@ -13,19 +13,41 @@ function saveLocalList() {
 }
 
 // -------------------------
-// Add item (Make List)
+// Dropdown logic
+// -------------------------
+function handleSelectChange() {
+  const select = document.getElementById("itemSelect");
+  const nameInput = document.getElementById("itemName");
+
+  if (select.value === "new") {
+    nameInput.style.display = "block";
+  } else {
+    nameInput.style.display = "none";
+  }
+}
+
+// -------------------------
+// Add item
 // -------------------------
 function addItem() {
-  const name = document.getElementById("itemName").value.trim();
+  const select = document.getElementById("itemSelect");
+  const nameInput = document.getElementById("itemName");
   const qty = parseInt(document.getElementById("itemQty").value);
 
-  if (!name) return;
+  let name;
+
+  if (select.value === "new") {
+    name = nameInput.value.trim();
+    if (!name) return;
+  } else {
+    name = select.value;
+  }
 
   list.push({ name, qty, checked: false });
   saveLocalList();
   renderList();
 
-  document.getElementById("itemName").value = "";
+  nameInput.value = "";
   document.getElementById("itemQty").value = 1;
 }
 
@@ -71,32 +93,20 @@ function downloadJSON() {
 // -------------------------
 // Load from GitHub (See List)
 // -------------------------
-
 async function loadFromGitHub() {
-  const url = "https://raw.githubusercontent.com/MeX1Co/mex1co.github.io/refs/heads/master/shoplist/shopping_list.json";
+  const url = "https://raw.githubusercontent.com/MeX1Co/mex1co.github.io/master/shoplist/shopping_list.json";
 
   const response = await fetch(url);
   const json = await response.json();
 
   renderSeeList(json.items);
 }
-
-/*
-async function loadFromGitHub() {
-  const url = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/shopping_list.json";
-
-  const response = await fetch(url);
-  const json = await response.json();
-
-  renderSeeList(json.items);
-}
-*/
 
 function renderSeeList(items) {
   const ul = document.getElementById("seeList");
   ul.innerHTML = "";
 
-  items.forEach((item, index) => {
+  items.forEach((item) => {
     const li = document.createElement("li");
     li.className = item.checked ? "checked" : "";
 
