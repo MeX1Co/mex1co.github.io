@@ -10,7 +10,32 @@
 <h1>Make a List</h1>
 
 <div class="input-row">
-  <input id="itemName" placeholder="Item name">
+
+  <select id="itemSelect" onchange="handleSelectChange()">
+    <option value="new">➕ Add New Item</option>
+    <option value="preitem01">preitem01</option>
+    <option value="preitem02">preitem02</option>
+    <option value="preitem03">preitem03</option>
+    <option value="preitem04">preitem04</option>
+    <option value="preitem05">preitem05</option>
+    <option value="preitem06">preitem06</option>
+    <option value="preitem07">preitem07</option>
+    <option value="preitem08">preitem08</option>
+    <option value="preitem09">preitem09</option>
+    <option value="preitem10">preitem10</option>
+    <option value="preitem11">preitem11</option>
+    <option value="preitem12">preitem12</option>
+    <option value="preitem13">preitem13</option>
+    <option value="preitem14">preitem14</option>
+    <option value="preitem15">preitem15</option>
+    <option value="preitem16">preitem16</option>
+    <option value="preitem17">preitem17</option>
+    <option value="preitem18">preitem18</option>
+    <option value="preitem19">preitem19</option>
+    <option value="preitem20">preitem20</option>
+  </select>
+
+  <input id="itemName" placeholder="New item name" style="display:none;">
   <input id="itemQty" type="number" placeholder="Qty" min="1" value="1">
   <button onclick="addItem()">Add</button>
 </div>
